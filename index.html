@@ -255,16 +255,12 @@
 
                     <!-- Stacked Links -->
                     <div>
-                         <label class="block text-xs text-gray-500 uppercase mb-1">Contact Link (Optional)</label>
-                         <input type="url" id="site-contact-link" placeholder="https://..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                         <label class="block text-xs text-gray-500 uppercase mb-1">Contact (Email/User)</label>
+                         <input type="text" id="site-contact-link" placeholder="user@example.com or @username" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
                     <div>
-                         <label class="block text-xs text-gray-500 uppercase mb-1">Discord Invite (Optional)</label>
-                         <input type="url" id="site-discord-link" placeholder="https://discord.gg/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
-                    </div>
-                    <div>
-                         <label class="block text-xs text-gray-500 uppercase mb-1">GitHub Repo (Optional)</label>
-                         <input type="url" id="site-github-link" placeholder="https://github.com/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                         <label class="block text-xs text-gray-500 uppercase mb-1">Discord Invite (URL)</label>
+                         <input type="url" id="site-discord-link" pattern="https://discord.gg/.*|https://discord.com/invite/.*" placeholder="https://discord.gg/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
 
                     <!-- Descriptions -->
@@ -359,20 +355,10 @@
                                     <span>By <span id="detail-author" class="text-gray-400"></span></span>
                                 </div>
                             </div>
-                            
-                            <!-- Edit/Delete Controls (Hidden by default) -->
-                            <div id="owner-controls" class="hidden flex gap-2">
-                                <button id="edit-site-btn" class="p-2 text-gray-400 hover:text-white border border-[#333] hover:border-gray-500 rounded-lg transition-colors" title="Edit Site">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <button id="delete-site-btn" class="p-2 text-red-400 hover:text-red-300 border border-red-900/30 hover:border-red-900/60 bg-red-900/10 rounded-lg transition-colors" title="Delete Site">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
                         </div>
                         
                         <!-- Social Links Container -->
-                        <div id="detail-socials" class="flex gap-3 mb-4 text-gray-400 text-sm"></div>
+                        <div id="detail-socials" class="flex gap-4 mb-4 items-center"></div>
 
                         <div class="flex gap-3">
                             <a id="detail-visit-btn" href="#" target="_blank" class="btn-primary flex items-center gap-2 px-6">
@@ -484,9 +470,6 @@
         let detailUpvoteBtn = document.getElementById('detail-upvote-btn'); // Using let for replacement
         const detailVoteCount = document.getElementById('detail-vote-count');
         const detailSocials = document.getElementById('detail-socials');
-        const ownerControls = document.getElementById('owner-controls');
-        let editSiteBtn = document.getElementById('edit-site-btn');
-        let deleteSiteBtn = document.getElementById('delete-site-btn');
         
         // Pending Modal
         const pendingModal = document.getElementById('pending-modal');
@@ -589,38 +572,11 @@
             submissionForm.reset();
             resetLogoPreview();
             
-            if (editData) {
-                modalTitle.innerText = "Edit Site";
-                editSiteIdInput.value = editData.id;
-                document.getElementById('site-title').value = editData.title;
-                document.getElementById('site-url').value = editData.url;
-                document.getElementById('site-author-name').value = editData.authorName;
-                document.getElementById('site-contact-link').value = editData.contactLink || '';
-                document.getElementById('site-discord-link').value = editData.discordLink || '';
-                document.getElementById('site-github-link').value = editData.githubLink || '';
-                document.getElementById('site-short-desc').value = editData.shortDescription;
-                document.getElementById('site-long-desc').value = editData.longDescription;
-                
-                // Handle Logo Pre-fill
-                if (editData.logoType === 'url') {
-                    document.getElementById('logo-type-url').checked = true;
-                    logoUrlContainer.classList.remove('hidden');
-                    logoUploadContainer.classList.add('hidden');
-                    document.getElementById('logo-url').value = editData.logoUrl;
-                    updatePreview(editData.logoUrl);
-                } else if (editData.logoType === 'upload' && editData.logoBase64) {
-                    document.getElementById('logo-type-upload').checked = true;
-                    logoUploadContainer.classList.remove('hidden');
-                    logoUrlContainer.classList.add('hidden');
-                    finalLogoBase64 = editData.logoBase64;
-                    updatePreview(editData.logoBase64);
-                }
-            } else {
-                modalTitle.innerText = "Submit a Site";
-                editSiteIdInput.value = "";
-                const authorInput = document.getElementById('site-author-name');
-                if(!authorInput.value) authorInput.value = currentUser.displayName;
-            }
+            // NOTE: Edit Logic REMOVED per request. Always fresh submission.
+            modalTitle.innerText = "Submit a Site";
+            editSiteIdInput.value = "";
+            const authorInput = document.getElementById('site-author-name');
+            if(!authorInput.value) authorInput.value = currentUser.displayName;
             
             modal.classList.remove('hidden');
         }
@@ -726,10 +682,9 @@
                 const authorName = document.getElementById('site-author-name').value;
                 const contactLink = document.getElementById('site-contact-link').value;
                 const discordLink = document.getElementById('site-discord-link').value;
-                const githubLink = document.getElementById('site-github-link').value;
                 const shortDesc = document.getElementById('site-short-desc').value;
                 const longDesc = document.getElementById('site-long-desc').value;
-                const editId = editSiteIdInput.value;
+                // REMOVED: Edit ID & Logic
                 
                 const logoType = document.querySelector('input[name="logo-type"]:checked').value;
                 let logoPayload = {};
@@ -751,7 +706,6 @@
                     authorName,
                     contactLink,
                     discordLink,
-                    githubLink,
                     shortDescription: shortDesc,
                     longDescription: longDesc,
                     ...logoPayload,
@@ -759,12 +713,6 @@
                     authorUid: currentUser.uid,
                     submittedAt: serverTimestamp()
                 };
-
-                if (editId) {
-                    // Edit Request
-                    docData.isEdit = true;
-                    docData.originalSiteId = editId;
-                }
 
                 await addDoc(collection(db, "submissions"), docData);
                 
@@ -809,7 +757,7 @@
                      if (data.logoType === 'upload' && data.logoBase64) logoSrc = data.logoBase64;
                      
                      let statusText = "Awaiting Review";
-                     if (data.isEdit) statusText = "Update Request Pending";
+                     // REMOVED: Edit status text since editing is disabled
 
                      item.innerHTML = `
                          <img src="${logoSrc}" class="w-12 h-12 rounded-lg object-cover bg-black" onerror="this.src='/images/logo.png'">
@@ -854,17 +802,22 @@
             detailDesc.innerText = site.longDescription || site.description || 'No description available.';
             detailVisitBtn.href = site.url;
             
-            // Populate Social Links
+            // Populate Social Links (Small Text Style)
             detailSocials.innerHTML = '';
             if (site.contactLink) {
-                 detailSocials.innerHTML += `<a href="${site.contactLink}" target="_blank" class="hover:text-white transition-colors" title="Contact"><i class="fa-solid fa-envelope"></i></a>`;
+                 let contactRef = site.contactLink;
+                 // Basic heuristic to add mailto if it looks like email
+                 if (contactRef.includes('@') && !contactRef.startsWith('http')) {
+                     contactRef = 'mailto:' + contactRef;
+                 }
+                 detailSocials.innerHTML += `<a href="${contactRef}" target="_blank" class="text-sm text-gray-400 hover:text-white transition-colors" title="Contact">Contact</a>`;
             }
             if (site.discordLink) {
-                 detailSocials.innerHTML += `<a href="${site.discordLink}" target="_blank" class="hover:text-white transition-colors" title="Discord"><i class="fa-brands fa-discord"></i></a>`;
+                 // Separator if needed
+                 if (detailSocials.innerHTML) detailSocials.innerHTML += `<span class="text-gray-600">|</span>`;
+                 detailSocials.innerHTML += `<a href="${site.discordLink}" target="_blank" class="text-sm text-gray-400 hover:text-white transition-colors" title="Discord">Discord</a>`;
             }
-            if (site.githubLink) {
-                 detailSocials.innerHTML += `<a href="${site.githubLink}" target="_blank" class="hover:text-white transition-colors" title="GitHub"><i class="fa-brands fa-github"></i></a>`;
-            }
+            // REMOVED: GitHub Link Display
 
             // Configure Upvote Button
             const upvotes = site.upvotes || [];
@@ -882,49 +835,31 @@
             detailUpvoteBtn.parentNode.replaceChild(newBtn, detailUpvoteBtn);
             detailUpvoteBtn = newBtn;
             
-            // Add new listener
+            // Add new listener (Immediate UI update logic added)
             newBtn.addEventListener('click', () => {
+                 // Immediate Toggle (Optimistic UI)
+                 const currentCount = parseInt(detailVoteCount.innerText) || 0;
+                 const isCurrentlyUpvoted = detailUpvoteBtn.classList.contains('text-purple-400');
+                 
+                 if (isCurrentlyUpvoted) {
+                     // Toggle Off
+                     detailUpvoteBtn.className = "px-4 py-2 rounded-xl border border-[#333] bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-white transition-colors flex items-center gap-2";
+                     detailVoteCount.innerText = Math.max(0, currentCount - 1);
+                 } else {
+                     // Toggle On
+                     detailUpvoteBtn.className = "px-4 py-2 rounded-xl border border-purple-500/50 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors flex items-center gap-2";
+                     detailVoteCount.innerText = currentCount + 1;
+                 }
+
                  const mockEvent = { currentTarget: { dataset: { id: site.id } } };
-                 handleUpvote(mockEvent).then(() => {
-                     const updatedSite = sitesData.find(s => s.id === site.id);
-                     if(updatedSite) openDetailsModal(updatedSite);
+                 // We don't chain openDetailsModal here anymore to avoid flickering/re-rendering
+                 handleUpvote(mockEvent).catch(e => {
+                     // Revert on error? For now just log
+                     console.error("Vote failed, state might be desynced", e);
                  });
             });
 
-            // Owner Controls (Edit/Delete)
-            if (currentUser && (currentUser.uid === site.authorUid || currentUser.email === ADMIN_EMAIL)) {
-                ownerControls.classList.remove('hidden');
-                
-                // Refresh Edit Btn
-                const newEdit = editSiteBtn.cloneNode(true);
-                editSiteBtn.parentNode.replaceChild(newEdit, editSiteBtn);
-                editSiteBtn = newEdit;
-                
-                editSiteBtn.addEventListener('click', () => {
-                    openSubmissionModal(site);
-                });
-
-                // Refresh Delete Btn
-                const newDelete = deleteSiteBtn.cloneNode(true);
-                deleteSiteBtn.parentNode.replaceChild(newDelete, deleteSiteBtn);
-                deleteSiteBtn = newDelete;
-                
-                deleteSiteBtn.addEventListener('click', async () => {
-                    if (confirm("Are you sure you want to delete this site? This cannot be undone.")) {
-                        try {
-                            await deleteDoc(doc(db, "sites", site.id));
-                            closeDetailsModal();
-                            showNotification("Site deleted.", "success");
-                        } catch (e) {
-                            console.error(e);
-                            showNotification("Error deleting site.", "error");
-                        }
-                    }
-                });
-
-            } else {
-                ownerControls.classList.add('hidden');
-            }
+            // REMOVED: Owner Controls (Edit/Delete) completely.
 
             detailsModal.classList.remove('hidden');
         }
@@ -941,7 +876,7 @@
         // Data Fetching & Rendering
         // ---------------------------------------------------------
         async function fetchSites() {
-            // Using onSnapshot for realtime site updates (better UX for edits/deletes)
+            // Using onSnapshot for realtime site updates
             onSnapshot(collection(db, "sites"), (snapshot) => {
                 loadingIndicator.classList.add('hidden');
                 sitesData = [];

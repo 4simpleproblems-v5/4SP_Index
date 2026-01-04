@@ -238,7 +238,7 @@
                     <!-- Title -->
                     <div>
                         <label class="block text-xs text-gray-500 uppercase mb-1">Project Title <span class="text-red-500">*</span></label>
-                        <input type="text" id="site-title" required class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                        <input type="text" id="site-title" required maxlength="36" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
 
                     <!-- URL -->
@@ -266,11 +266,11 @@
                     <!-- Descriptions -->
                     <div>
                         <label class="block text-xs text-gray-500 uppercase mb-1">Short Description (Card View) <span class="text-red-500">*</span></label>
-                        <textarea id="site-short-desc" required maxlength="120" rows="2" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
+                        <textarea id="site-short-desc" required maxlength="102" rows="2" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
                     </div>
                     <div>
                         <label class="block text-xs text-gray-500 uppercase mb-1">Long Description <span class="text-red-500">*</span></label>
-                        <textarea id="site-long-desc" required rows="4" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
+                        <textarea id="site-long-desc" required maxlength="240" rows="4" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
                     </div>
 
                     <!-- Logo Section -->
@@ -358,7 +358,7 @@
                         </div>
                         
                         <!-- Social Links Container -->
-                        <div id="detail-socials" class="flex gap-4 mb-4 items-center"></div>
+                        <div id="detail-socials" class="flex gap-4 mb-4 items-center flex-wrap"></div>
 
                         <div class="flex gap-3">
                             <a id="detail-visit-btn" href="#" target="_blank" class="btn-primary flex items-center gap-2 px-6">
@@ -378,7 +378,9 @@
                     </div>
                     <div>
                         <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-2">Full Description</h3>
-                        <p id="detail-description" class="text-gray-300 leading-relaxed whitespace-pre-line"></p>
+                        <div id="detail-description" class="text-gray-300 leading-relaxed whitespace-pre-line text-base"></div>
+                        <!-- Links Container -->
+                        <div id="detail-extracted-links" class="mt-4 flex flex-wrap gap-2"></div>
                     </div>
                 </div>
 
@@ -466,8 +468,9 @@
         const detailAuthor = document.getElementById('detail-author');
         const detailShortDesc = document.getElementById('detail-short-desc');
         const detailDesc = document.getElementById('detail-description');
+        const detailExtractedLinks = document.getElementById('detail-extracted-links');
         const detailVisitBtn = document.getElementById('detail-visit-btn');
-        let detailUpvoteBtn = document.getElementById('detail-upvote-btn'); // Using let for replacement
+        let detailUpvoteBtn = document.getElementById('detail-upvote-btn');
         const detailVoteCount = document.getElementById('detail-vote-count');
         const detailSocials = document.getElementById('detail-socials');
         
@@ -572,7 +575,7 @@
             submissionForm.reset();
             resetLogoPreview();
             
-            // NOTE: Edit Logic REMOVED per request. Always fresh submission.
+            // ALWAYS NEW SUBMISSION per request
             modalTitle.innerText = "Submit a Site";
             editSiteIdInput.value = "";
             const authorInput = document.getElementById('site-author-name');
@@ -598,7 +601,7 @@
                     logoUploadContainer.classList.remove('hidden');
                     logoUrlContainer.classList.add('hidden');
                     if (logoFile.files[0]) handleFileUpload(logoFile.files[0]);
-                    else if (finalLogoBase64) updatePreview(finalLogoBase64); // Restore base64 preview if switching back
+                    else if (finalLogoBase64) updatePreview(finalLogoBase64);
                 } else {
                     logoUploadContainer.classList.add('hidden');
                     logoUrlContainer.classList.remove('hidden');
@@ -665,7 +668,7 @@
             logoPreview.src = '';
             logoPreview.classList.add('hidden');
             logoPlaceholder.classList.remove('hidden');
-            if (!editSiteIdInput.value) finalLogoBase64 = null; // Only clear base64 if not editing or explicit clear needed
+            if (!editSiteIdInput.value) finalLogoBase64 = null; 
         }
 
         // Form Submission
@@ -684,7 +687,6 @@
                 const discordLink = document.getElementById('site-discord-link').value;
                 const shortDesc = document.getElementById('site-short-desc').value;
                 const longDesc = document.getElementById('site-long-desc').value;
-                // REMOVED: Edit ID & Logic
                 
                 const logoType = document.querySelector('input[name="logo-type"]:checked').value;
                 let logoPayload = {};
@@ -757,7 +759,7 @@
                      if (data.logoType === 'upload' && data.logoBase64) logoSrc = data.logoBase64;
                      
                      let statusText = "Awaiting Review";
-                     // REMOVED: Edit status text since editing is disabled
+                     if (data.isEdit) statusText = "Update Request Pending";
 
                      item.innerHTML = `
                          <img src="${logoSrc}" class="w-12 h-12 rounded-lg object-cover bg-black" onerror="this.src='/images/logo.png'">
@@ -799,25 +801,74 @@
             detailCategory.innerText = site.category || 'Web';
             detailAuthor.innerText = site.authorName || 'Anonymous';
             detailShortDesc.innerText = site.shortDescription || '';
-            detailDesc.innerText = site.longDescription || site.description || 'No description available.';
+            
+            // Description Parsing (Rich Text & Links)
+            const rawDesc = site.longDescription || site.description || 'No description available.';
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const extractedLinks = [];
+            
+            // Replace URLs with clickable links
+            const richDesc = rawDesc.replace(urlRegex, (url) => {
+                extractedLinks.push(url);
+                return `<a href="${url}" target="_blank" class="text-blue-400 hover:underline break-all">${url}</a>`;
+            });
+            detailDesc.innerHTML = richDesc; // Use innerHTML for links
+
+            // Extracted Links Buttons
+            detailExtractedLinks.innerHTML = '';
+            extractedLinks.forEach(url => {
+                try {
+                    const domain = new URL(url).hostname;
+                    const btn = document.createElement('a');
+                    btn.href = url;
+                    btn.target = "_blank";
+                    btn.className = "flex items-center gap-2 bg-[#1a1a1a] hover:bg-[#252525] border border-[#333] px-3 py-1.5 rounded-lg text-xs text-gray-300 hover:text-white transition-colors";
+                    btn.innerHTML = `
+                        <img src="https://www.faviconextractor.com/favicon/${domain}" class="w-4 h-4 rounded-sm" onerror="this.style.display='none'">
+                        <span>${domain}</span>
+                        <i class="fa-solid fa-external-link-alt text-[10px] opacity-50"></i>
+                    `;
+                    detailExtractedLinks.appendChild(btn);
+                } catch(e) {}
+            });
+
             detailVisitBtn.href = site.url;
             
-            // Populate Social Links (Small Text Style)
+            // Populate Social Links
             detailSocials.innerHTML = '';
+            
+            // Contact Logic
             if (site.contactLink) {
-                 let contactRef = site.contactLink;
-                 // Basic heuristic to add mailto if it looks like email
-                 if (contactRef.includes('@') && !contactRef.startsWith('http')) {
-                     contactRef = 'mailto:' + contactRef;
-                 }
-                 detailSocials.innerHTML += `<a href="${contactRef}" target="_blank" class="text-sm text-gray-400 hover:text-white transition-colors" title="Contact">Contact</a>`;
+                 const contactBtn = document.createElement('button');
+                 contactBtn.className = "text-sm text-gray-400 hover:text-white transition-colors cursor-pointer";
+                 contactBtn.textContent = "Contact";
+                 contactBtn.onclick = () => {
+                     if (site.contactLink.includes('@')) {
+                         window.location.href = `mailto:${site.contactLink}`;
+                     } else {
+                         navigator.clipboard.writeText(site.contactLink).then(() => {
+                             showNotification("Copied contact info: " + site.contactLink, "success");
+                         });
+                     }
+                 };
+                 detailSocials.appendChild(contactBtn);
             }
+            
+            // Discord Logic
             if (site.discordLink) {
-                 // Separator if needed
-                 if (detailSocials.innerHTML) detailSocials.innerHTML += `<span class="text-gray-600">|</span>`;
-                 detailSocials.innerHTML += `<a href="${site.discordLink}" target="_blank" class="text-sm text-gray-400 hover:text-white transition-colors" title="Discord">Discord</a>`;
+                 if (detailSocials.children.length > 0) {
+                     const sep = document.createElement('span');
+                     sep.className = "text-gray-600";
+                     sep.textContent = "|";
+                     detailSocials.appendChild(sep);
+                 }
+                 const discordBtn = document.createElement('a');
+                 discordBtn.href = site.discordLink;
+                 discordBtn.target = "_blank";
+                 discordBtn.className = "text-sm text-gray-400 hover:text-white transition-colors";
+                 discordBtn.textContent = "Discord";
+                 detailSocials.appendChild(discordBtn);
             }
-            // REMOVED: GitHub Link Display
 
             // Configure Upvote Button
             const upvotes = site.upvotes || [];
@@ -835,9 +886,8 @@
             detailUpvoteBtn.parentNode.replaceChild(newBtn, detailUpvoteBtn);
             detailUpvoteBtn = newBtn;
             
-            // Add new listener (Immediate UI update logic added)
+            // Add new listener (Optimistic UI)
             newBtn.addEventListener('click', () => {
-                 // Immediate Toggle (Optimistic UI)
                  const currentCount = parseInt(detailVoteCount.innerText) || 0;
                  const isCurrentlyUpvoted = detailUpvoteBtn.classList.contains('text-purple-400');
                  
@@ -852,14 +902,10 @@
                  }
 
                  const mockEvent = { currentTarget: { dataset: { id: site.id } } };
-                 // We don't chain openDetailsModal here anymore to avoid flickering/re-rendering
                  handleUpvote(mockEvent).catch(e => {
-                     // Revert on error? For now just log
-                     console.error("Vote failed, state might be desynced", e);
+                     console.error("Vote failed", e);
                  });
             });
-
-            // REMOVED: Owner Controls (Edit/Delete) completely.
 
             detailsModal.classList.remove('hidden');
         }
@@ -876,7 +922,6 @@
         // Data Fetching & Rendering
         // ---------------------------------------------------------
         async function fetchSites() {
-            // Using onSnapshot for realtime site updates
             onSnapshot(collection(db, "sites"), (snapshot) => {
                 loadingIndicator.classList.add('hidden');
                 sitesData = [];
@@ -926,16 +971,13 @@
                 const voteCount = upvotes.length;
                 const isUpvoted = currentUser && upvotes.includes(currentUser.uid);
                 
-                // Determine logo source
                 let logoSrc = '/images/logo.png'; 
                 if (site.logoType === 'url' && site.logoUrl) logoSrc = site.logoUrl;
                 if (site.logoType === 'upload' && site.logoBase64) logoSrc = site.logoBase64;
 
                 const card = document.createElement('div');
                 card.className = 'card';
-                // Attach click directly to card for robust interaction
                 card.onclick = (e) => {
-                     // Check if clicked element is a button or link (or child of one)
                      if (e.target.closest('button') || e.target.closest('a')) return;
                      openDetailsModal(site);
                 };
@@ -980,7 +1022,7 @@
         }
 
         async function handleUpvote(e) {
-            e.stopPropagation(); // Prevent card click
+            e.stopPropagation(); 
             if (!currentUser) {
                 showNotification("Please sign in to upvote.", "error");
                 return;
@@ -1002,7 +1044,6 @@
                 } else {
                     await updateDoc(siteRef, { upvotes: arrayUnion(currentUser.uid) });
                 }
-                // No need to manually re-render, onSnapshot will handle it
             } catch (error) {
                 console.error("Error updating vote:", error);
                 showNotification("Failed to update vote.", "error");

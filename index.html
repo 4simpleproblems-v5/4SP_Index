@@ -460,7 +460,7 @@
         const detailAuthor = document.getElementById('detail-author');
         const detailDesc = document.getElementById('detail-description');
         const detailVisitBtn = document.getElementById('detail-visit-btn');
-        const detailUpvoteBtn = document.getElementById('detail-upvote-btn');
+        let detailUpvoteBtn = document.getElementById('detail-upvote-btn');
         const detailVoteCount = document.getElementById('detail-vote-count');
         const detailSocials = document.getElementById('detail-socials');
         
@@ -792,6 +792,7 @@
             // Clean event listener
             const newBtn = detailUpvoteBtn.cloneNode(true);
             detailUpvoteBtn.parentNode.replaceChild(newBtn, detailUpvoteBtn);
+            detailUpvoteBtn = newBtn;
             
             // Add new listener
             newBtn.addEventListener('click', () => {

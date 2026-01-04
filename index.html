@@ -1,1 +1,372 @@
-The 4SP Index is a website where you can apply your website to be publicly viewed. This is inspiration from UBGHub, which uses Supabase, except I am using Firebase and adding more features such as site card editting if you are the creator. Made with ❤ from 4SP.
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4SP Index - Discover Student Sites</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { 
+            font-family: 'Geist', sans-serif; 
+            background-color: #040404; 
+            color: #c0c0c0; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gradient-text {
+            background-image: linear-gradient(90deg, #0070f3, #f81ce5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background-color: rgba(147, 51, 234, 0.1); 
+            border: 1px solid rgba(192, 132, 252, 0.5); 
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: rgba(192, 132, 252, 0.2);
+            border-color: rgba(192, 132, 252, 1);
+            box-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
+        }
+
+        .card {
+            background-color: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            border-radius: 24px;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+        .card:hover {
+            border-color: #333;
+            transform: translateY(-2px);
+        }
+
+        .sort-select {
+            background-color: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            color: #c0c0c0;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            outline: none;
+        }
+        .sort-select:focus {
+            border-color: #555;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #a855f7;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <header class="border-b border-[#1a1a1a] bg-[#040404]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-xl font-bold text-white tracking-tight">4SP Index</span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div id="auth-container">
+                    <button id="login-btn" class="btn-primary flex items-center gap-2">
+                        <i class="fa-brands fa-google"></i> Sign In
+                    </button>
+                    <div id="user-profile" class="hidden flex items-center gap-3">
+                        <img id="user-avatar" src="" alt="User" class="w-8 h-8 rounded-full border border-[#333]">
+                        <button id="logout-btn" class="text-sm text-gray-500 hover:text-white transition">Sign Out</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+        
+        <!-- Controls -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-2xl text-white mb-1">Explore Sites</h1>
+                <p class="text-gray-500 text-sm">Discover projects from the 4SP community.</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <select id="sort-select" class="sort-select appearance-none pr-8 cursor-pointer">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="most-upvotes">Most Upvotes</option>
+                        <option value="least-upvotes">Least Upvotes</option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none"></i>
+                </div>
+                <!-- Apply Button (Placeholder Functionality) -->
+                <button id="apply-btn" class="btn-primary opacity-50 cursor-not-allowed" title="Applications are currently closed">
+                    <i class="fa-solid fa-plus mr-1"></i> Submit Site
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid -->
+        <div id="sites-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Sites will be injected here -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-indicator" class="flex justify-center py-20">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-20">
+            <i class="fa-solid fa-ghost text-4xl text-gray-700 mb-4"></i>
+            <p class="text-gray-500">No sites found yet. Be the first!</p>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-[#1a1a1a] py-8 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
+            <p>Made with ❤️ from 4SP.</p>
+            <div class="mt-2">
+                <a href="legal.html#terms-of-service" class="hover:text-gray-400">Terms of Service</a>
+                <span class="mx-2">|</span>
+                <a href="legal.html#privacy-policy" class="hover:text-gray-400">Privacy Policy</a>
+                <span class="mx-2">|</span>
+                <a href="about.html" class="hover:text-gray-400">About</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Firebase Scripts -->
+    <script src="firebase-config.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Initialize Firebase
+        const app = initializeApp(window.firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        // State
+        let currentUser = null;
+        let sitesData = [];
+
+        // DOM Elements
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userProfile = document.getElementById('user-profile');
+        const userAvatar = document.getElementById('user-avatar');
+        const sitesGrid = document.getElementById('sites-grid');
+        const sortSelect = document.getElementById('sort-select');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const emptyState = document.getElementById('empty-state');
+        const applyBtn = document.getElementById('apply-btn');
+
+        // Auth Listeners
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
+            if (user) {
+                loginBtn.classList.add('hidden');
+                userProfile.classList.remove('hidden');
+                userAvatar.src = user.photoURL;
+            } else {
+                loginBtn.classList.remove('hidden');
+                userProfile.classList.add('hidden');
+            }
+            // Re-render to update upvote button states if needed
+            renderSites();
+        });
+
+        // Auth Actions
+        loginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch((error) => {
+                console.error("Login failed:", error);
+                alert("Login failed. Please try again.");
+            });
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+        
+        applyBtn.addEventListener('click', () => {
+            alert("The application form is not available yet. Please check back later.");
+        });
+
+        // Data Fetching
+        async function fetchSites() {
+            try {
+                const querySnapshot = await getDocs(collection(db, "sites"));
+                sitesData = [];
+                querySnapshot.forEach((doc) => {
+                    sitesData.push({ id: doc.id, ...doc.data() });
+                });
+                
+                loadingIndicator.classList.add('hidden');
+                
+                if (sitesData.length === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    sortAndRender();
+                }
+            } catch (error) {
+                console.error("Error fetching sites:", error);
+                loadingIndicator.classList.add('hidden');
+                // If firestore is restricted or empty, show empty state or error
+                sitesGrid.innerHTML = `<p class="text-red-500 text-center col-span-full">Unable to load sites. (Are Firestore rules configured?)</p>`;
+            }
+        }
+
+        // Sorting Logic
+        function sortAndRender() {
+            const sortValue = sortSelect.value;
+            
+            sitesData.sort((a, b) => {
+                // Ensure timestamp exists, default to 0
+                const timeA = a.createdAt?.seconds || 0;
+                const timeB = b.createdAt?.seconds || 0;
+                // Ensure upvotes exists, default to empty array
+                const votesA = a.upvotes?.length || 0;
+                const votesB = b.upvotes?.length || 0;
+
+                switch(sortValue) {
+                    case 'newest': return timeB - timeA;
+                    case 'oldest': return timeA - timeB;
+                    case 'most-upvotes': return votesB - votesA;
+                    case 'least-upvotes': return votesA - votesB;
+                    default: return 0;
+                }
+            });
+
+            renderSites();
+        }
+
+        sortSelect.addEventListener('change', sortAndRender);
+
+        // Rendering
+        function renderSites() {
+            sitesGrid.innerHTML = '';
+            
+            if (sitesData.length === 0 && loadingIndicator.classList.contains('hidden')) {
+                // Don't clear if empty, handled by fetchSites
+                return; 
+            }
+
+            sitesData.forEach(site => {
+                const upvotes = site.upvotes || [];
+                const voteCount = upvotes.length;
+                const isUpvoted = currentUser && upvotes.includes(currentUser.uid);
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl text-white font-medium truncate pr-2" title="${site.title || 'Untitled'}">${site.title || 'Untitled'}</h3>
+                            <span class="text-xs text-gray-600 border border-gray-800 px-2 py-1 rounded-full whitespace-nowrap">${site.category || 'Web'}</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-3">${site.description || 'No description provided.'}</p>
+                    </div>
+                    
+                    <div>
+                        <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#1a1a1a]">
+                            <div class="flex items-center gap-2">
+                                <button class="upvote-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${isUpvoted ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' : 'bg-[#1a1a1a] text-gray-500 hover:bg-[#222]'}" 
+                                    data-id="${site.id}">
+                                    <i class="fa-solid fa-arrow-up"></i>
+                                    <span>${voteCount}</span>
+                                </button>
+                            </div>
+                            <a href="${site.url}" target="_blank" class="text-gray-400 hover:text-white text-sm flex items-center gap-1 transition-colors">
+                                Visit <i class="fa-solid fa-external-link-alt text-xs"></i>
+                            </a>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-600">
+                            By ${site.authorName || 'Anonymous'}
+                        </div>
+                    </div>
+                `;
+                sitesGrid.appendChild(card);
+            });
+
+            // Attach event listeners to new buttons
+            document.querySelectorAll('.upvote-btn').forEach(btn => {
+                btn.addEventListener('click', handleUpvote);
+            });
+        }
+
+        async function handleUpvote(e) {
+            if (!currentUser) {
+                alert("Please sign in to upvote.");
+                return;
+            }
+
+            // Find button element (could be icon or span clicked)
+            const btn = e.currentTarget;
+            const siteId = btn.dataset.id;
+            const siteRef = doc(db, "sites", siteId);
+            const siteIndex = sitesData.findIndex(s => s.id === siteId);
+            
+            if (siteIndex === -1) return;
+
+            const site = sitesData[siteIndex];
+            const upvotes = site.upvotes || [];
+            const isUpvoted = upvotes.includes(currentUser.uid);
+
+            try {
+                // Optimistic UI Update
+                if (isUpvoted) {
+                    site.upvotes = upvotes.filter(uid => uid !== currentUser.uid);
+                    await updateDoc(siteRef, {
+                        upvotes: arrayRemove(currentUser.uid)
+                    });
+                } else {
+                    site.upvotes.push(currentUser.uid);
+                    await updateDoc(siteRef, {
+                        upvotes: arrayUnion(currentUser.uid)
+                    });
+                }
+                renderSites(); // Re-render with new state
+            } catch (error) {
+                console.error("Error updating vote:", error);
+                alert("Failed to update vote.");
+                // Revert optimistic update? For now just log.
+            }
+        }
+
+        // Initial Load
+        fetchSites();
+
+    </script>
+</body>
+</html>

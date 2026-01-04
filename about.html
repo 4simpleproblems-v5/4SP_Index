@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4SP - About</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="navbar.css">
+    <script src="navbar-loader.js" defer></script>
+
+    <style>
+        body { 
+            font-family: 'Geist', sans-serif; 
+            background-color: #040404; 
+            color: #c0c0c0; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 4rem;
+        }
+
+        .gradient-text {
+            background-image: linear-gradient(90deg, #0070f3, #f81ce5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        .btn-toolbar-style {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            color: #9ca3af;
+            background-color: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-toolbar-style:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .content-box {
+            background-color: #0d0d0d; 
+            border: 1px solid #1a1a1a; 
+            border-radius: 24px; 
+            padding: 2rem;
+            color: #c0c0c0;
+            margin-bottom: 2rem;
+        }
+
+        a.link {
+            color: #a855f7;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        a.link:hover {
+            color: #d8b4fe;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col">
+
+    <header class="org-navbar fixed top-0 w-full z-50 bg-[#040404]/80 backdrop-blur-md border-b border-[#1a1a1a]">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <a href="index.html" id="logo-link" class="flex items-center space-x-2">
+                    <img src="/images/logo.png" alt="4SP Logo" class="h-8 w-auto" id="navbar-logo">
+                </a>
+            </div>
+            
+             <nav class="flex items-center gap-2">
+                <a href="index.html" class="btn-toolbar-style" title="Go to Home">
+                    <i class="fa-solid fa-home w-4"></i>
+                    Home
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-4xl mx-auto px-4 py-16 w-full">
+        <section class="text-center mb-16">
+            <h1 class="text-5xl sm:text-6xl font-light tracking-tighter mb-6 leading-tight">
+                About <span class="gradient-text font-bold">4SP Index</span>
+            </h1>
+            <p class="text-xl text-gray-500 font-light max-w-2xl mx-auto">
+                Connecting students to decentralized, local-first tools.
+            </p>
+        </section>
+
+        <div class="content-box">
+            <h2 class="text-2xl text-white mb-4">Inspiration</h2>
+            <p class="text-gray-400 leading-relaxed mb-4">
+                The 4SP Index was heavily inspired by the original <strong class="text-white">UBGHub</strong>. 
+                UBGHub pioneered the concept of a central hub for unblocked games and utilities, showing us what was possible with community-driven platforms.
+            </p>
+            <p class="text-gray-400 leading-relaxed">
+                While UBGHub utilizes Supabase, we have built the 4SP Index on <strong class="text-white">Firebase</strong> to provide a seamless, secure, and robust experience for our users, adding unique features like card editing for creators and deeper community integration.
+            </p>
+        </div>
+
+        <div class="content-box">
+            <h2 class="text-2xl text-white mb-4">Our Mission</h2>
+            <p class="text-gray-400 leading-relaxed">
+                To provide a secure, unblockable, and offline-capable toolkit for students. We believe in "Simple as a Standard," avoiding corporate bloat and tracking in favor of speed, privacy, and utility.
+            </p>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-[#1a1a1a] py-8 mt-auto">
+        <div class="mx-auto max-w-7xl px-4 text-center text-gray-600 text-sm">
+            Made with ❤️ from 4SP.
+            <span class="mx-2">|</span>
+            <a href="legal.html#terms-of-service" class="hover:text-gray-400">Terms of Service</a>
+            <span class="mx-2">|</span>
+            <a href="legal.html#privacy-policy" class="hover:text-gray-400">Privacy Policy</a>
+        </div>
+    </footer>
+
+</body>
+</html>

@@ -55,7 +55,8 @@
             justify-content: space-between;
             height: 100%;
             position: relative;
-            overflow: hidden; /* For overlay */
+            overflow: hidden;
+            cursor: pointer; /* Make the whole card clickable */
         }
         
         .card:hover {
@@ -63,7 +64,7 @@
             transform: translateY(-2px);
         }
 
-        /* Hover Overlay for Card */
+        /* Hover Overlay for Card (Visual Only) */
         .card-overlay {
             position: absolute;
             inset: 0;
@@ -73,15 +74,15 @@
             justify-content: center;
             opacity: 0;
             transition: opacity 0.2s ease;
-            cursor: pointer;
             z-index: 10;
+            pointer-events: none; /* KEY FIX: Let clicks pass through to the card */
         }
         
         .card:hover .card-overlay {
             opacity: 1;
         }
 
-        /* Ensure interactions with buttons don't trigger overlay click */
+        /* Ensure interactions with buttons work and stop propagation */
         .card-controls {
             position: relative;
             z-index: 20; /* Above overlay */
@@ -134,7 +135,6 @@
             transform: scale(1.02) translateX(-5px); background-color: #151515;
             border-color: #555; box-shadow: 0 8px 25px rgba(0,0,0,0.7);
         }
-        /* Notification Types */
         .notification-icon.success { color: #4ade80; }
         .notification-icon.error { color: #f87171; }
         .notification-icon.info { color: #60a5fa; }
@@ -152,7 +152,7 @@
             <div class="flex items-center gap-4">
                 <a href="legal.html" class="text-sm text-gray-400 hover:text-white transition-colors">Legal</a>
                 
-                <!-- Admin Button (Hidden by default) -->
+                <!-- Admin Button -->
                 <a href="admin.html" id="admin-btn" class="hidden text-sm text-red-400 hover:text-red-300 transition-colors border border-red-900/50 bg-red-900/10 px-3 py-1 rounded-lg">
                     <i class="fa-solid fa-shield-halved mr-1"></i> Admin
                 </a>
@@ -181,6 +181,11 @@
             </div>
             
             <div class="flex items-center gap-3">
+                 <!-- My Pending Button -->
+                 <button id="my-pending-btn" class="hidden px-3 py-2 text-sm text-gray-400 hover:text-white border border-[#333] rounded-lg transition-colors">
+                    <i class="fa-solid fa-clock mr-1"></i> My Pending
+                </button>
+
                 <div class="relative">
                     <select id="sort-select" class="sort-select appearance-none pr-8 cursor-pointer">
                         <option value="newest">Newest First</option>
@@ -231,29 +236,52 @@
                 <form id="submission-form" class="space-y-4">
                     <!-- Title -->
                     <div>
-                        <label class="block text-xs text-gray-500 uppercase mb-1">Project Title</label>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Project Title <span class="text-red-500">*</span></label>
                         <input type="text" id="site-title" required class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
 
                     <!-- URL -->
                     <div>
-                        <label class="block text-xs text-gray-500 uppercase mb-1">Site URL (HTTPS required)</label>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Site URL (HTTPS required) <span class="text-red-500">*</span></label>
                         <input type="url" id="site-url" required pattern="https://.*" placeholder="https://example.com" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
 
-                    <!-- Descriptions (Updated Layout) -->
+                    <!-- Creator Info -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                             <label class="block text-xs text-gray-500 uppercase mb-1">Creator Name <span class="text-red-500">*</span></label>
+                             <input type="text" id="site-author-name" required class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                        </div>
+                        <div>
+                             <label class="block text-xs text-gray-500 uppercase mb-1">Contact Link (Optional)</label>
+                             <input type="url" id="site-contact-link" placeholder="https://..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                             <label class="block text-xs text-gray-500 uppercase mb-1">Discord Invite (Optional)</label>
+                             <input type="url" id="site-discord-link" placeholder="https://discord.gg/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                        </div>
+                        <div>
+                             <label class="block text-xs text-gray-500 uppercase mb-1">GitHub Repo (Optional)</label>
+                             <input type="url" id="site-github-link" placeholder="https://github.com/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Descriptions -->
                     <div>
-                        <label class="block text-xs text-gray-500 uppercase mb-1">Short Description (Card View)</label>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Short Description (Card View) <span class="text-red-500">*</span></label>
                         <textarea id="site-short-desc" required maxlength="120" rows="2" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-500 uppercase mb-1">Long Description</label>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Long Description <span class="text-red-500">*</span></label>
                         <textarea id="site-long-desc" required rows="4" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
                     </div>
 
                     <!-- Logo Section -->
                     <div class="border-t border-[#1a1a1a] pt-4 mt-2">
-                        <label class="block text-xs text-gray-500 uppercase mb-3">Logo / Icon</label>
+                        <label class="block text-xs text-gray-500 uppercase mb-3">Logo / Icon <span class="text-red-500">*</span></label>
                         
                         <div class="flex flex-col sm:flex-row gap-6">
                             <!-- Input Options -->
@@ -293,6 +321,24 @@
             </div>
         </div>
     </div>
+    
+    <!-- Pending Submissions Modal -->
+    <div id="pending-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="pending-backdrop"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl px-4">
+            <div class="bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-6 sm:p-8 max-h-[80vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl text-white font-light">My Pending Submissions</h2>
+                    <button id="close-pending-btn" class="text-gray-500 hover:text-white">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+                <div id="pending-list" class="space-y-3">
+                    <!-- Pending items injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Site Details Modal (Read-Only) -->
     <div id="details-modal" class="fixed inset-0 z-[100] hidden">
@@ -300,7 +346,7 @@
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl px-4">
             <div class="bg-[#0d0d0d] border border-[#1a1a1a] rounded-3xl p-8 max-h-[90vh] overflow-y-auto relative">
                 
-                <button id="close-details-btn" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
+                <button id="close-details-btn" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors z-20">
                     <i class="fa-solid fa-xmark text-2xl"></i>
                 </button>
 
@@ -312,11 +358,16 @@
                             <span id="detail-category" class="border border-gray-800 px-2 py-0.5 rounded-full"></span>
                             <span>By <span id="detail-author" class="text-gray-400"></span></span>
                         </div>
+                        
+                        <!-- Social Links Container -->
+                        <div id="detail-socials" class="flex gap-3 mb-4 text-gray-400 text-sm">
+                            <!-- Links injected via JS -->
+                        </div>
+
                         <div class="flex gap-3">
                             <a id="detail-visit-btn" href="#" target="_blank" class="btn-primary flex items-center gap-2 px-6">
                                 Visit Site <i class="fa-solid fa-external-link-alt"></i>
                             </a>
-                            <!-- Reusing button styles for consistency, but making it specific -->
                             <button id="detail-upvote-btn" class="px-4 py-2 rounded-xl border border-[#333] bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-white transition-colors flex items-center gap-2">
                                 <i class="fa-solid fa-arrow-up"></i> <span id="detail-vote-count">0</span>
                             </button>
@@ -354,7 +405,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, arrayUnion, arrayRemove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, arrayUnion, arrayRemove, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // Initialize Firebase
         const app = initializeApp(window.firebaseConfig);
@@ -381,6 +432,7 @@
         const emptyState = document.getElementById('empty-state');
         const applyBtn = document.getElementById('apply-btn');
         const adminBtn = document.getElementById('admin-btn');
+        const myPendingBtn = document.getElementById('my-pending-btn');
         const notificationContainer = document.getElementById('notification-container');
         
         // Modal Elements (Submission)
@@ -410,6 +462,13 @@
         const detailVisitBtn = document.getElementById('detail-visit-btn');
         const detailUpvoteBtn = document.getElementById('detail-upvote-btn');
         const detailVoteCount = document.getElementById('detail-vote-count');
+        const detailSocials = document.getElementById('detail-socials');
+        
+        // Pending Modal
+        const pendingModal = document.getElementById('pending-modal');
+        const pendingBackdrop = document.getElementById('pending-backdrop');
+        const closePendingBtn = document.getElementById('close-pending-btn');
+        const pendingList = document.getElementById('pending-list');
 
 
         // Auth Listeners
@@ -426,11 +485,15 @@
                 } else {
                     adminBtn.classList.add('hidden');
                 }
+                
+                // Show "My Pending" button
+                myPendingBtn.classList.remove('hidden');
 
             } else {
                 loginBtn.classList.remove('hidden');
                 userProfile.classList.add('hidden');
                 adminBtn.classList.add('hidden');
+                myPendingBtn.classList.add('hidden');
             }
             renderSites();
         });
@@ -460,7 +523,6 @@
             toast.innerHTML = `<i class="${iconClass} notification-icon ${type}"></i><span>${message}</span>`;
             notificationContainer.appendChild(toast);
             
-            // Trigger animation
             requestAnimationFrame(() => {
                 toast.classList.add('show');
             });
@@ -480,6 +542,10 @@
                 showNotification("Please sign in to submit a site.", "error");
                 return;
             }
+            // Auto-fill author name if empty
+            const authorInput = document.getElementById('site-author-name');
+            if(!authorInput.value) authorInput.value = currentUser.displayName;
+            
             modal.classList.remove('hidden');
         }
 
@@ -499,12 +565,10 @@
                 if (e.target.value === 'upload') {
                     logoUploadContainer.classList.remove('hidden');
                     logoUrlContainer.classList.add('hidden');
-                    // Retrigger preview if file exists
                     if (logoFile.files[0]) handleFileUpload(logoFile.files[0]);
                 } else {
                     logoUploadContainer.classList.add('hidden');
                     logoUrlContainer.classList.remove('hidden');
-                    // Retrigger preview if url exists
                     if (logoUrl.value) handleUrlPreview(logoUrl.value);
                 }
             });
@@ -537,7 +601,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    finalLogoBase64 = canvas.toDataURL('image/webp', 0.8); // Compress to WebP 0.8 quality
+                    finalLogoBase64 = canvas.toDataURL('image/webp', 0.8);
                     updatePreview(finalLogoBase64);
                 };
                 img.src = e.target.result;
@@ -582,6 +646,10 @@
             try {
                 const title = document.getElementById('site-title').value;
                 const url = document.getElementById('site-url').value;
+                const authorName = document.getElementById('site-author-name').value;
+                const contactLink = document.getElementById('site-contact-link').value;
+                const discordLink = document.getElementById('site-discord-link').value;
+                const githubLink = document.getElementById('site-github-link').value;
                 const shortDesc = document.getElementById('site-short-desc').value;
                 const longDesc = document.getElementById('site-long-desc').value;
                 
@@ -602,10 +670,13 @@
                 const docData = {
                     title,
                     url,
+                    authorName,
+                    contactLink,
+                    discordLink,
+                    githubLink,
                     shortDescription: shortDesc,
                     longDescription: longDesc,
                     ...logoPayload,
-                    authorName: currentUser.displayName,
                     authorEmail: currentUser.email,
                     authorUid: currentUser.uid,
                     submittedAt: serverTimestamp()
@@ -626,6 +697,58 @@
         });
 
         // ---------------------------------------------------------
+        // Pending Submissions Logic
+        // ---------------------------------------------------------
+        async function openPendingModal() {
+             if (!currentUser) return;
+             pendingModal.classList.remove('hidden');
+             pendingList.innerHTML = '<div class="spinner mx-auto"></div>';
+             
+             try {
+                 const q = query(collection(db, "submissions"), where("authorUid", "==", currentUser.uid));
+                 const snapshot = await getDocs(q);
+                 
+                 pendingList.innerHTML = '';
+                 if(snapshot.empty) {
+                     pendingList.innerHTML = '<p class="text-gray-500 text-center">No pending submissions.</p>';
+                     return;
+                 }
+                 
+                 snapshot.forEach(doc => {
+                     const data = doc.data();
+                     const item = document.createElement('div');
+                     item.className = 'bg-[#151515] border border-[#333] rounded-xl p-4 flex items-center gap-4';
+                     
+                     let logoSrc = '/images/logo.png';
+                     if (data.logoType === 'url' && data.logoUrl) logoSrc = data.logoUrl;
+                     if (data.logoType === 'upload' && data.logoBase64) logoSrc = data.logoBase64;
+                     
+                     item.innerHTML = `
+                         <img src="${logoSrc}" class="w-12 h-12 rounded-lg object-cover bg-black" onerror="this.src='/images/logo.png'">
+                         <div>
+                             <h3 class="text-white font-medium">${data.title}</h3>
+                             <p class="text-xs text-yellow-500"><i class="fa-solid fa-hourglass-half mr-1"></i> Awaiting Review</p>
+                         </div>
+                     `;
+                     pendingList.appendChild(item);
+                 });
+                 
+             } catch(e) {
+                 console.error(e);
+                 pendingList.innerHTML = '<p class="text-red-400">Error loading submissions.</p>';
+             }
+        }
+        
+        function closePendingModal() {
+            pendingModal.classList.add('hidden');
+        }
+
+        myPendingBtn.addEventListener('click', openPendingModal);
+        closePendingBtn.addEventListener('click', closePendingModal);
+        pendingBackdrop.addEventListener('click', closePendingModal);
+
+
+        // ---------------------------------------------------------
         // Details Modal Logic
         // ---------------------------------------------------------
         
@@ -641,6 +764,18 @@
             detailAuthor.innerText = site.authorName || 'Anonymous';
             detailDesc.innerText = site.longDescription || site.description || 'No description available.';
             detailVisitBtn.href = site.url;
+            
+            // Populate Social Links
+            detailSocials.innerHTML = '';
+            if (site.contactLink) {
+                 detailSocials.innerHTML += `<a href="${site.contactLink}" target="_blank" class="hover:text-white transition-colors" title="Contact"><i class="fa-solid fa-envelope"></i></a>`;
+            }
+            if (site.discordLink) {
+                 detailSocials.innerHTML += `<a href="${site.discordLink}" target="_blank" class="hover:text-white transition-colors" title="Discord"><i class="fa-brands fa-discord"></i></a>`;
+            }
+            if (site.githubLink) {
+                 detailSocials.innerHTML += `<a href="${site.githubLink}" target="_blank" class="hover:text-white transition-colors" title="GitHub"><i class="fa-brands fa-github"></i></a>`;
+            }
 
             // Configure Upvote Button in Modal
             const upvotes = site.upvotes || [];
@@ -654,23 +789,16 @@
                  detailUpvoteBtn.className = "px-4 py-2 rounded-xl border border-[#333] bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-white transition-colors flex items-center gap-2";
             }
 
-            // Remove old listener to prevent duplicates (simple clone approach)
+            // Clean event listener
             const newBtn = detailUpvoteBtn.cloneNode(true);
             detailUpvoteBtn.parentNode.replaceChild(newBtn, detailUpvoteBtn);
             
             // Add new listener
             newBtn.addEventListener('click', () => {
-                 // Reuse handleUpvote logic but we need to mock the event or call function directly
-                 // Easiest is to trigger the upvote on the grid item which handles logic, 
-                 // but simpler to just call logic here directly for the modal context.
-                 
-                 // Since handleUpvote expects an event with dataset.id, let's create a proxy
                  const mockEvent = { currentTarget: { dataset: { id: site.id } } };
                  handleUpvote(mockEvent).then(() => {
-                     // After vote, we need to refresh THIS modal's button state.
-                     // But fetchSites updates sitesData. We need to find the updated site in sitesData.
                      const updatedSite = sitesData.find(s => s.id === site.id);
-                     if(updatedSite) openDetailsModal(updatedSite); // Re-render modal with new state
+                     if(updatedSite) openDetailsModal(updatedSite);
                  });
             });
 
@@ -751,8 +879,16 @@
 
                 const card = document.createElement('div');
                 card.className = 'card';
+                // Attach click directly to card for robust interaction
+                // Overlay is now pointer-events-none (pure visual)
+                card.onclick = (e) => {
+                     // Check if clicked element is a button or link (or child of one)
+                     if (e.target.closest('button') || e.target.closest('a')) return;
+                     openDetailsModal(site);
+                };
+
                 card.innerHTML = `
-                    <div class="card-overlay" data-site-id="${site.id}">
+                    <div class="card-overlay">
                         <i class="fa-solid fa-eye text-white text-3xl"></i>
                     </div>
                     <div>
@@ -782,15 +918,6 @@
                     </div>
                 `;
                 sitesGrid.appendChild(card);
-            });
-
-            // Card Click Event (Overlay)
-            document.querySelectorAll('.card-overlay').forEach(overlay => {
-                overlay.addEventListener('click', (e) => {
-                    const siteId = e.currentTarget.dataset.siteId;
-                    const site = sitesData.find(s => s.id === siteId);
-                    if (site) openDetailsModal(site);
-                });
             });
 
             // Upvote Button

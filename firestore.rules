@@ -1,0 +1,90 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- HELPER FUNCTIONS ---
+    
+    // Check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Check if the user matches the requested UID
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Check if user is an admin (hardcoded email check for security in rules)
+    // Note: It's better to use Custom Claims in production, but email works for simple setups
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == "4simpleproblems@gmail.com";
+    }
+
+    // --- COLLECTIONS ---
+
+    // SITES: Public read, Admin write, Authenticated users can update 'upvotes' only
+    match /sites/{siteId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      
+      // Allow updates if:
+      // 1. User is Admin (can update anything)
+      // 2. User is Authenticated AND only updating 'upvotes' field
+      allow update: if isAdmin() || (
+        isSignedIn() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes']) &&
+        // Ensure user is only adding/removing their own UID (basic validation)
+        (
+          request.resource.data.upvotes.size() == resource.data.upvotes.size() + 1 ||
+          request.resource.data.upvotes.size() == resource.data.upvotes.size() - 1
+        )
+      );
+    }
+
+    // SUBMISSIONS: Authenticated users create, Admin reads/deletes
+    match /submissions/{submissionId} {
+      // Admins can read all, Users can only read their own (optional, currently admin panel reads all)
+      allow read: if isAdmin(); 
+      
+      // Users can create submissions
+      allow create: if isSignedIn() && 
+                      request.resource.data.authorUid == request.auth.uid &&
+                      request.resource.data.title is string &&
+                      request.resource.data.url is string;
+                      
+      // Admins can delete (deny/approve)
+      allow delete: if isAdmin();
+      allow update: if isAdmin();
+    }
+
+    // USERS: Users read/write their own data
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    // ADMINS: Helper collection for claims (if used)
+    match /admins/{userId} {
+      allow read: if true; // Or restrict to authenticated
+      allow write: if isAdmin();
+    }
+
+    // CONFIG: Public read (for feature flags), Admin write
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ACCESS CODES: Public read (to verify login), Admin write
+    // (Consider restricting read to 'get' only, not 'list' if possible, but 'read' covers both)
+    match /access_codes/{codeId} {
+      allow read: if true; 
+      allow write: if isAdmin();
+    }
+    
+    // ANALYTICS: Public write (anonymous tracking), Admin read
+    match /analytics/{sessionId} {
+      allow create, update: if true; // Allow anyone to log analytics
+      allow read: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4SP Index - Admin</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { 
+            font-family: 'Geist', sans-serif; 
+            background-color: #040404; 
+            color: #c0c0c0; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .btn-primary {
+            background-color: rgba(147, 51, 234, 0.1); 
+            border: 1px solid rgba(192, 132, 252, 0.5); 
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: rgba(192, 132, 252, 0.2);
+            border-color: rgba(192, 132, 252, 1);
+        }
+        .card {
+            background-color: #0d0d0d;
+            border: 1px solid #1a1a1a;
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+
+    <header class="border-b border-[#1a1a1a] bg-[#040404]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold">4SP Admin</h1>
+            <a href="index.html" class="text-gray-400 hover:text-white">Back to Index</a>
+        </div>
+    </header>
+
+    <main id="admin-panel" class="max-w-7xl mx-auto px-4 py-8 hidden">
+        <h2 class="text-2xl mb-6">Pending Submissions</h2>
+        <div id="submissions-list" class="space-y-4">
+            <!-- Submissions will be loaded here -->
+        </div>
+    </main>
+
+    <div id="login-panel" class="flex flex-col items-center justify-center min-h-[50vh]">
+        <p class="mb-4">Please sign in as Administrator.</p>
+        <button id="admin-login-btn" class="btn-primary">Sign In with Google</button>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const app = initializeApp(window.firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const provider = new GoogleAuthProvider();
+
+        const adminEmail = "4simpleproblems@gmail.com";
+        const loginPanel = document.getElementById('login-panel');
+        const adminPanel = document.getElementById('admin-panel');
+        const submissionsList = document.getElementById('submissions-list');
+
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === adminEmail) {
+                loginPanel.classList.add('hidden');
+                adminPanel.classList.remove('hidden');
+                loadSubmissions();
+            } else {
+                loginPanel.classList.remove('hidden');
+                adminPanel.classList.add('hidden');
+                if (user) {
+                    alert("Access Denied: You are not an administrator.");
+                }
+            }
+        });
+
+        document.getElementById('admin-login-btn').addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch(console.error);
+        });
+
+        async function loadSubmissions() {
+            submissionsList.innerHTML = '<p class="text-gray-500">Loading...</p>';
+            try {
+                const querySnapshot = await getDocs(collection(db, "submissions"));
+                submissionsList.innerHTML = '';
+                
+                if (querySnapshot.empty) {
+                    submissionsList.innerHTML = '<p class="text-gray-500">No pending submissions.</p>';
+                    return;
+                }
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    
+                    let logoHtml = '';
+                    if (data.logoType === 'url') {
+                        logoHtml = `<img src="${data.logoUrl}" class="w-16 h-16 rounded-lg object-cover bg-gray-800" alt="Logo">`;
+                    } else if (data.logoType === 'upload' && data.logoBase64) {
+                        logoHtml = `<img src="${data.logoBase64}" class="w-16 h-16 rounded-lg object-cover bg-gray-800" alt="Logo">`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="flex gap-4 mb-4">
+                            ${logoHtml}
+                            <div>
+                                <h3 class="text-xl font-bold">${data.title}</h3>
+                                <p class="text-sm text-gray-500">${data.url}</p>
+                                <p class="text-xs text-gray-600">Submitted by: ${data.authorName} (${data.authorEmail})</p>
+                            </div>
+                        </div>
+                        <div class="mb-4 space-y-2">
+                            <p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">Short:</span> ${data.shortDescription}</p>
+                            <p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">Long:</span> ${data.longDescription}</p>
+                            ${data.previewUrl ? `<p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">Preview:</span> <a href="${data.previewUrl}" target="_blank" class="text-blue-400 hover:underline">View Image</a></p>` : ''}
+                        </div>
+                        <div class="flex gap-3 pt-4 border-t border-[#1a1a1a]">
+                            <button class="btn-approve bg-green-500/20 text-green-400 border border-green-500/50 px-4 py-2 rounded-lg hover:bg-green-500/30">Approve</button>
+                            <button class="btn-deny bg-red-500/20 text-red-400 border border-red-500/50 px-4 py-2 rounded-lg hover:bg-red-500/30">Deny</button>
+                        </div>
+                    `;
+
+                    // Logic for Approve
+                    card.querySelector('.btn-approve').addEventListener('click', async () => {
+                        if(!confirm("Approve this site?")) return;
+                        try {
+                            // Move to sites collection
+                            const siteData = {
+                                ...data,
+                                createdAt: serverTimestamp(),
+                                upvotes: [] // Initialize empty upvotes
+                            };
+                            // Remove submission-specific fields if any (keep author info)
+                            
+                            await setDoc(doc(db, "sites", docSnap.id), siteData);
+                            await deleteDoc(doc(db, "submissions", docSnap.id));
+                            card.remove();
+                            alert("Site approved!");
+                        } catch (e) {
+                            console.error(e);
+                            alert("Error approving site: " + e.message);
+                        }
+                    });
+
+                    // Logic for Deny
+                    card.querySelector('.btn-deny').addEventListener('click', async () => {
+                        if(!confirm("Deny and delete this submission?")) return;
+                        try {
+                            await deleteDoc(doc(db, "submissions", docSnap.id));
+                            card.remove();
+                        } catch (e) {
+                            console.error(e);
+                            alert("Error denying site: " + e.message);
+                        }
+                    });
+
+                    submissionsList.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error loading submissions:", error);
+                submissionsList.innerHTML = `<p class="text-red-500">Error loading submissions: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

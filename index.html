@@ -94,6 +94,12 @@
             
             <div class="flex items-center gap-4">
                 <a href="legal.html" class="text-sm text-gray-400 hover:text-white transition-colors">Legal</a>
+                
+                <!-- Admin Button (Hidden by default) -->
+                <a href="admin.html" id="admin-btn" class="hidden text-sm text-red-400 hover:text-red-300 transition-colors border border-red-900/50 bg-red-900/10 px-3 py-1 rounded-lg">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> Admin
+                </a>
+
                 <div id="auth-container">
                     <button id="login-btn" class="btn-primary flex items-center gap-2">
                         <i class="fa-brands fa-google"></i> Sign In
@@ -127,8 +133,8 @@
                     </select>
                     <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 pointer-events-none"></i>
                 </div>
-                <!-- Apply Button (Placeholder Functionality) -->
-                <button id="apply-btn" class="btn-primary opacity-50 cursor-not-allowed" title="Applications are currently closed">
+                <!-- Apply Button -->
+                <button id="apply-btn" class="btn-primary">
                     <i class="fa-solid fa-plus mr-1"></i> Submit Site
                 </button>
             </div>
@@ -152,6 +158,93 @@
 
     </main>
 
+    <!-- Submission Modal -->
+    <div id="submission-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="modal-backdrop"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl px-4">
+            <div class="bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
+                
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl text-white font-light">Submit a Site</h2>
+                    <button id="close-modal-btn" class="text-gray-500 hover:text-white">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <form id="submission-form" class="space-y-4">
+                    <!-- Title -->
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Project Title</label>
+                        <input type="text" id="site-title" required class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                    </div>
+
+                    <!-- URL -->
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Site URL (HTTPS required)</label>
+                        <input type="url" id="site-url" required pattern="https://.*" placeholder="https://example.com" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                    </div>
+
+                    <!-- Descriptions -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 uppercase mb-1">Short Description (Card View)</label>
+                            <textarea id="site-short-desc" required maxlength="120" rows="3" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 uppercase mb-1">Long Description</label>
+                            <textarea id="site-long-desc" required rows="3" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Logo Section -->
+                    <div class="border-t border-[#1a1a1a] pt-4 mt-2">
+                        <label class="block text-xs text-gray-500 uppercase mb-3">Logo / Icon</label>
+                        
+                        <div class="flex flex-col sm:flex-row gap-6">
+                            <!-- Input Options -->
+                            <div class="flex-1 space-y-3">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <input type="radio" name="logo-type" value="upload" id="logo-type-upload" checked class="accent-purple-500">
+                                    <label for="logo-type-upload" class="text-sm text-gray-300">Upload Image</label>
+                                    
+                                    <input type="radio" name="logo-type" value="url" id="logo-type-url" class="ml-4 accent-purple-500">
+                                    <label for="logo-type-url" class="text-sm text-gray-300">Image URL</label>
+                                </div>
+
+                                <!-- Upload Input -->
+                                <div id="logo-upload-container">
+                                    <input type="file" id="logo-file" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-500/10 file:text-purple-400 hover:file:bg-purple-500/20">
+                                    <p class="text-xs text-gray-600 mt-1">Will be resized to max 512px.</p>
+                                </div>
+
+                                <!-- URL Input -->
+                                <div id="logo-url-container" class="hidden">
+                                    <input type="url" id="logo-url" placeholder="https://example.com/logo.png" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm">
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div class="flex-shrink-0">
+                                <div class="w-24 h-24 rounded-2xl border border-[#333] bg-[#050505] flex items-center justify-center overflow-hidden relative">
+                                    <img id="logo-preview" src="" alt="" class="w-full h-full object-cover hidden">
+                                    <span id="logo-placeholder" class="text-gray-700 text-xs">Preview</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Image URL -->
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Preview Image URL (Optional)</label>
+                        <input type="url" id="site-preview-url" placeholder="https://example.com/screenshot.png" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm">
+                    </div>
+
+                    <button type="submit" id="submit-form-btn" class="w-full btn-primary py-3 mt-4 font-medium">Submit for Review</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer class="border-t border-[#1a1a1a] py-8 mt-auto">
         <div class="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
             <p>Made with ❤️ from 4SP.</p>
@@ -170,7 +263,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, arrayUnion, arrayRemove, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // Initialize Firebase
         const app = initializeApp(window.firebaseConfig);
@@ -178,9 +271,13 @@
         const db = getFirestore(app);
         const provider = new GoogleAuthProvider();
 
+        // Constants
+        const ADMIN_EMAIL = "4simpleproblems@gmail.com";
+
         // State
         let currentUser = null;
         let sitesData = [];
+        let finalLogoBase64 = null;
 
         // DOM Elements
         const loginBtn = document.getElementById('login-btn');
@@ -192,6 +289,20 @@
         const loadingIndicator = document.getElementById('loading-indicator');
         const emptyState = document.getElementById('empty-state');
         const applyBtn = document.getElementById('apply-btn');
+        const adminBtn = document.getElementById('admin-btn');
+        
+        // Modal Elements
+        const modal = document.getElementById('submission-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const submissionForm = document.getElementById('submission-form');
+        const logoTypeRadios = document.getElementsByName('logo-type');
+        const logoUploadContainer = document.getElementById('logo-upload-container');
+        const logoUrlContainer = document.getElementById('logo-url-container');
+        const logoFile = document.getElementById('logo-file');
+        const logoUrl = document.getElementById('logo-url');
+        const logoPreview = document.getElementById('logo-preview');
+        const logoPlaceholder = document.getElementById('logo-placeholder');
 
         // Auth Listeners
         onAuthStateChanged(auth, (user) => {
@@ -200,11 +311,19 @@
                 loginBtn.classList.add('hidden');
                 userProfile.classList.remove('hidden');
                 userAvatar.src = user.photoURL;
+
+                // Admin Check
+                if (user.email === ADMIN_EMAIL) {
+                    adminBtn.classList.remove('hidden');
+                } else {
+                    adminBtn.classList.add('hidden');
+                }
+
             } else {
                 loginBtn.classList.remove('hidden');
                 userProfile.classList.add('hidden');
+                adminBtn.classList.add('hidden');
             }
-            // Re-render to update upvote button states if needed
             renderSites();
         });
 
@@ -219,12 +338,169 @@
         logoutBtn.addEventListener('click', () => {
             signOut(auth);
         });
+
+        // ---------------------------------------------------------
+        // Modal Logic
+        // ---------------------------------------------------------
         
-        applyBtn.addEventListener('click', () => {
-            alert("The application form is not available yet. Please check back later.");
+        function openModal() {
+            if (!currentUser) {
+                alert("Please sign in to submit a site.");
+                return;
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            submissionForm.reset();
+            resetLogoPreview();
+        }
+
+        applyBtn.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+        modalBackdrop.addEventListener('click', closeModal);
+
+        // Logo Input Toggle
+        logoTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                if (e.target.value === 'upload') {
+                    logoUploadContainer.classList.remove('hidden');
+                    logoUrlContainer.classList.add('hidden');
+                    // Retrigger preview if file exists
+                    if (logoFile.files[0]) handleFileUpload(logoFile.files[0]);
+                } else {
+                    logoUploadContainer.classList.add('hidden');
+                    logoUrlContainer.classList.remove('hidden');
+                    // Retrigger preview if url exists
+                    if (logoUrl.value) handleUrlPreview(logoUrl.value);
+                }
+            });
         });
 
-        // Data Fetching
+        // File Upload Processing
+        logoFile.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 512;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    finalLogoBase64 = canvas.toDataURL('image/webp', 0.8); // Compress to WebP 0.8 quality
+                    updatePreview(finalLogoBase64);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // URL Preview Processing
+        logoUrl.addEventListener('input', (e) => {
+            handleUrlPreview(e.target.value);
+        });
+
+        function handleUrlPreview(url) {
+            if (!url) {
+                resetLogoPreview();
+                return;
+            }
+            // For URLs, we just use the URL directly, no base64 conversion needed for preview
+            // But validation happens on submit
+            updatePreview(url);
+        }
+
+        function updatePreview(src) {
+            logoPreview.src = src;
+            logoPreview.classList.remove('hidden');
+            logoPlaceholder.classList.add('hidden');
+        }
+
+        function resetLogoPreview() {
+            logoPreview.src = '';
+            logoPreview.classList.add('hidden');
+            logoPlaceholder.classList.remove('hidden');
+            finalLogoBase64 = null;
+        }
+
+        // Form Submission
+        submissionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-form-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Submitting...";
+
+            try {
+                const title = document.getElementById('site-title').value;
+                const url = document.getElementById('site-url').value;
+                const shortDesc = document.getElementById('site-short-desc').value;
+                const longDesc = document.getElementById('site-long-desc').value;
+                const previewUrl = document.getElementById('site-preview-url').value;
+                
+                const logoType = document.querySelector('input[name="logo-type"]:checked').value;
+                let logoPayload = {};
+
+                if (logoType === 'upload') {
+                    if (!finalLogoBase64) {
+                        throw new Error("Please upload a logo.");
+                    }
+                    logoPayload = { logoType: 'upload', logoBase64: finalLogoBase64 };
+                } else {
+                    const lUrl = document.getElementById('logo-url').value;
+                    if (!lUrl) throw new Error("Please enter a logo URL.");
+                    logoPayload = { logoType: 'url', logoUrl: lUrl };
+                }
+
+                const docData = {
+                    title,
+                    url,
+                    shortDescription: shortDesc,
+                    longDescription: longDesc,
+                    previewUrl,
+                    ...logoPayload,
+                    authorName: currentUser.displayName,
+                    authorEmail: currentUser.email,
+                    authorUid: currentUser.uid,
+                    submittedAt: serverTimestamp()
+                };
+
+                await addDoc(collection(db, "submissions"), docData);
+                
+                alert("Submission received! It will be reviewed by an administrator.");
+                closeModal();
+
+            } catch (error) {
+                console.error("Submission error:", error);
+                alert("Error: " + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit for Review";
+            }
+        });
+
+
+        // ---------------------------------------------------------
+        // Data Fetching & Rendering
+        // ---------------------------------------------------------
         async function fetchSites() {
             try {
                 const querySnapshot = await getDocs(collection(db, "sites"));
@@ -238,25 +514,22 @@
                 if (sitesData.length === 0) {
                     emptyState.classList.remove('hidden');
                 } else {
+                    emptyState.classList.add('hidden');
                     sortAndRender();
                 }
             } catch (error) {
                 console.error("Error fetching sites:", error);
                 loadingIndicator.classList.add('hidden');
-                // If firestore is restricted or empty, show empty state or error
                 sitesGrid.innerHTML = `<p class="text-red-500 text-center col-span-full">Unable to load sites. (Are Firestore rules configured?)</p>`;
             }
         }
 
-        // Sorting Logic
         function sortAndRender() {
             const sortValue = sortSelect.value;
             
             sitesData.sort((a, b) => {
-                // Ensure timestamp exists, default to 0
                 const timeA = a.createdAt?.seconds || 0;
                 const timeB = b.createdAt?.seconds || 0;
-                // Ensure upvotes exists, default to empty array
                 const votesA = a.upvotes?.length || 0;
                 const votesB = b.upvotes?.length || 0;
 
@@ -274,29 +547,33 @@
 
         sortSelect.addEventListener('change', sortAndRender);
 
-        // Rendering
         function renderSites() {
             sitesGrid.innerHTML = '';
             
-            if (sitesData.length === 0 && loadingIndicator.classList.contains('hidden')) {
-                // Don't clear if empty, handled by fetchSites
-                return; 
-            }
+            if (sitesData.length === 0) return;
 
             sitesData.forEach(site => {
                 const upvotes = site.upvotes || [];
                 const voteCount = upvotes.length;
                 const isUpvoted = currentUser && upvotes.includes(currentUser.uid);
                 
+                // Determine logo source
+                let logoSrc = '/images/logo.png'; // Default or placeholder
+                if (site.logoType === 'url' && site.logoUrl) logoSrc = site.logoUrl;
+                if (site.logoType === 'upload' && site.logoBase64) logoSrc = site.logoBase64;
+
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
                     <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl text-white font-medium truncate pr-2" title="${site.title || 'Untitled'}">${site.title || 'Untitled'}</h3>
-                            <span class="text-xs text-gray-600 border border-gray-800 px-2 py-1 rounded-full whitespace-nowrap">${site.category || 'Web'}</span>
+                        <div class="flex items-start gap-3 mb-3">
+                             <img src="${logoSrc}" class="w-10 h-10 rounded-lg object-cover bg-[#151515] border border-[#222]" alt="Icon" onerror="this.src='/images/logo.png'">
+                             <div class="min-w-0">
+                                <h3 class="text-lg text-white font-medium truncate leading-tight" title="${site.title || 'Untitled'}">${site.title || 'Untitled'}</h3>
+                                <p class="text-xs text-gray-600 truncate">${site.category || 'Web'}</p>
+                             </div>
                         </div>
-                        <p class="text-gray-400 text-sm mb-4 line-clamp-3">${site.description || 'No description provided.'}</p>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-3 leading-relaxed">${site.shortDescription || site.description || 'No description provided.'}</p>
                     </div>
                     
                     <div>
@@ -312,15 +589,11 @@
                                 Visit <i class="fa-solid fa-external-link-alt text-xs"></i>
                             </a>
                         </div>
-                        <div class="mt-2 text-xs text-gray-600">
-                            By ${site.authorName || 'Anonymous'}
-                        </div>
                     </div>
                 `;
                 sitesGrid.appendChild(card);
             });
 
-            // Attach event listeners to new buttons
             document.querySelectorAll('.upvote-btn').forEach(btn => {
                 btn.addEventListener('click', handleUpvote);
             });
@@ -332,7 +605,6 @@
                 return;
             }
 
-            // Find button element (could be icon or span clicked)
             const btn = e.currentTarget;
             const siteId = btn.dataset.id;
             const siteRef = doc(db, "sites", siteId);
@@ -345,23 +617,17 @@
             const isUpvoted = upvotes.includes(currentUser.uid);
 
             try {
-                // Optimistic UI Update
                 if (isUpvoted) {
                     site.upvotes = upvotes.filter(uid => uid !== currentUser.uid);
-                    await updateDoc(siteRef, {
-                        upvotes: arrayRemove(currentUser.uid)
-                    });
+                    await updateDoc(siteRef, { upvotes: arrayRemove(currentUser.uid) });
                 } else {
                     site.upvotes.push(currentUser.uid);
-                    await updateDoc(siteRef, {
-                        upvotes: arrayUnion(currentUser.uid)
-                    });
+                    await updateDoc(siteRef, { upvotes: arrayUnion(currentUser.uid) });
                 }
-                renderSites(); // Re-render with new state
+                renderSites();
             } catch (error) {
                 console.error("Error updating vote:", error);
                 alert("Failed to update vote.");
-                // Revert optimistic update? For now just log.
             }
         }
 

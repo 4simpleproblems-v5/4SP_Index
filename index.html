@@ -43,6 +43,7 @@
             box-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
         }
 
+        /* CARD STYLES */
         .card {
             background-color: #0d0d0d;
             border: 1px solid #1a1a1a;
@@ -53,10 +54,37 @@
             flex-direction: column;
             justify-content: space-between;
             height: 100%;
+            position: relative;
+            overflow: hidden; /* For overlay */
         }
+        
         .card:hover {
             border-color: #333;
             transform: translateY(-2px);
+        }
+
+        /* Hover Overlay for Card */
+        .card-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .card:hover .card-overlay {
+            opacity: 1;
+        }
+
+        /* Ensure interactions with buttons don't trigger overlay click */
+        .card-controls {
+            position: relative;
+            z-index: 20; /* Above overlay */
         }
 
         .sort-select {
@@ -81,6 +109,35 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Notification Toast */
+        #notification-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        .notification-toast {
+            background-color: #0a0a0a; border: 1px solid #333; border-radius: 14px;
+            padding: 0.75rem 1.25rem; color: #fff; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem;
+            min-width: 200px; transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease, background-color 0.2s;
+            opacity: 0; pointer-events: auto; cursor: default;
+        }
+        .notification-toast.show { transform: translateX(0); opacity: 1; }
+        .notification-toast.show:hover {
+            transform: scale(1.02) translateX(-5px); background-color: #151515;
+            border-color: #555; box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+        }
+        /* Notification Types */
+        .notification-icon.success { color: #4ade80; }
+        .notification-icon.error { color: #f87171; }
+        .notification-icon.info { color: #60a5fa; }
     </style>
 </head>
 <body>
@@ -184,16 +241,14 @@
                         <input type="url" id="site-url" required pattern="https://.*" placeholder="https://example.com" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
 
-                    <!-- Descriptions -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs text-gray-500 uppercase mb-1">Short Description (Card View)</label>
-                            <textarea id="site-short-desc" required maxlength="120" rows="3" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-500 uppercase mb-1">Long Description</label>
-                            <textarea id="site-long-desc" required rows="3" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
-                        </div>
+                    <!-- Descriptions (Updated Layout) -->
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Short Description (Card View)</label>
+                        <textarea id="site-short-desc" required maxlength="120" rows="2" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 uppercase mb-1">Long Description</label>
+                        <textarea id="site-long-desc" required rows="4" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm resize-none"></textarea>
                     </div>
 
                     <!-- Logo Section -->
@@ -233,17 +288,53 @@
                         </div>
                     </div>
 
-                    <!-- Preview Image URL -->
-                    <div>
-                        <label class="block text-xs text-gray-500 uppercase mb-1">Preview Image URL (Optional)</label>
-                        <input type="url" id="site-preview-url" placeholder="https://example.com/screenshot.png" class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors text-sm">
-                    </div>
-
                     <button type="submit" id="submit-form-btn" class="w-full btn-primary py-3 mt-4 font-medium">Submit for Review</button>
                 </form>
             </div>
         </div>
     </div>
+
+    <!-- Site Details Modal (Read-Only) -->
+    <div id="details-modal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="details-backdrop"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl px-4">
+            <div class="bg-[#0d0d0d] border border-[#1a1a1a] rounded-3xl p-8 max-h-[90vh] overflow-y-auto relative">
+                
+                <button id="close-details-btn" class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-2xl"></i>
+                </button>
+
+                <div class="flex flex-col sm:flex-row gap-6 mb-8">
+                    <img id="detail-logo" src="" alt="Logo" class="w-24 h-24 rounded-2xl bg-[#151515] border border-[#222] object-cover flex-shrink-0">
+                    <div>
+                        <h2 id="detail-title" class="text-3xl text-white font-medium mb-2 leading-tight"></h2>
+                        <div class="flex items-center gap-3 mb-4 text-sm text-gray-500">
+                            <span id="detail-category" class="border border-gray-800 px-2 py-0.5 rounded-full"></span>
+                            <span>By <span id="detail-author" class="text-gray-400"></span></span>
+                        </div>
+                        <div class="flex gap-3">
+                            <a id="detail-visit-btn" href="#" target="_blank" class="btn-primary flex items-center gap-2 px-6">
+                                Visit Site <i class="fa-solid fa-external-link-alt"></i>
+                            </a>
+                            <!-- Reusing button styles for consistency, but making it specific -->
+                            <button id="detail-upvote-btn" class="px-4 py-2 rounded-xl border border-[#333] bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-white transition-colors flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-up"></i> <span id="detail-vote-count">0</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-[#1a1a1a] pt-6">
+                    <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-3">About this project</h3>
+                    <p id="detail-description" class="text-gray-300 leading-relaxed whitespace-pre-line"></p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
 
     <footer class="border-t border-[#1a1a1a] py-8 mt-auto">
         <div class="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
@@ -290,8 +381,9 @@
         const emptyState = document.getElementById('empty-state');
         const applyBtn = document.getElementById('apply-btn');
         const adminBtn = document.getElementById('admin-btn');
+        const notificationContainer = document.getElementById('notification-container');
         
-        // Modal Elements
+        // Modal Elements (Submission)
         const modal = document.getElementById('submission-modal');
         const closeModalBtn = document.getElementById('close-modal-btn');
         const modalBackdrop = document.getElementById('modal-backdrop');
@@ -303,6 +395,22 @@
         const logoUrl = document.getElementById('logo-url');
         const logoPreview = document.getElementById('logo-preview');
         const logoPlaceholder = document.getElementById('logo-placeholder');
+
+        // Modal Elements (Details)
+        const detailsModal = document.getElementById('details-modal');
+        const detailsBackdrop = document.getElementById('details-backdrop');
+        const closeDetailsBtn = document.getElementById('close-details-btn');
+        
+        // Detail Fields
+        const detailLogo = document.getElementById('detail-logo');
+        const detailTitle = document.getElementById('detail-title');
+        const detailCategory = document.getElementById('detail-category');
+        const detailAuthor = document.getElementById('detail-author');
+        const detailDesc = document.getElementById('detail-description');
+        const detailVisitBtn = document.getElementById('detail-visit-btn');
+        const detailUpvoteBtn = document.getElementById('detail-upvote-btn');
+        const detailVoteCount = document.getElementById('detail-vote-count');
+
 
         // Auth Listeners
         onAuthStateChanged(auth, (user) => {
@@ -331,7 +439,7 @@
         loginBtn.addEventListener('click', () => {
             signInWithPopup(auth, provider).catch((error) => {
                 console.error("Login failed:", error);
-                alert("Login failed. Please try again.");
+                showNotification("Login failed. Please try again.", "error");
             });
         });
 
@@ -340,12 +448,36 @@
         });
 
         // ---------------------------------------------------------
-        // Modal Logic
+        // Notification System
+        // ---------------------------------------------------------
+        function showNotification(message, type = 'info') {
+            const iconClass = type === 'success' ? 'fa-solid fa-check-circle' : 
+                              type === 'error' ? 'fa-solid fa-circle-exclamation' : 
+                              'fa-solid fa-info-circle';
+            
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast';
+            toast.innerHTML = `<i class="${iconClass} notification-icon ${type}"></i><span>${message}</span>`;
+            notificationContainer.appendChild(toast);
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => { if (toast.parentElement) toast.remove(); }, 300);
+            }, 3000);
+        }
+
+        // ---------------------------------------------------------
+        // Modal Logic (Submission)
         // ---------------------------------------------------------
         
         function openModal() {
             if (!currentUser) {
-                alert("Please sign in to submit a site.");
+                showNotification("Please sign in to submit a site.", "error");
                 return;
             }
             modal.classList.remove('hidden');
@@ -423,8 +555,6 @@
                 resetLogoPreview();
                 return;
             }
-            // For URLs, we just use the URL directly, no base64 conversion needed for preview
-            // But validation happens on submit
             updatePreview(url);
         }
 
@@ -454,7 +584,6 @@
                 const url = document.getElementById('site-url').value;
                 const shortDesc = document.getElementById('site-short-desc').value;
                 const longDesc = document.getElementById('site-long-desc').value;
-                const previewUrl = document.getElementById('site-preview-url').value;
                 
                 const logoType = document.querySelector('input[name="logo-type"]:checked').value;
                 let logoPayload = {};
@@ -475,7 +604,6 @@
                     url,
                     shortDescription: shortDesc,
                     longDescription: longDesc,
-                    previewUrl,
                     ...logoPayload,
                     authorName: currentUser.displayName,
                     authorEmail: currentUser.email,
@@ -485,17 +613,76 @@
 
                 await addDoc(collection(db, "submissions"), docData);
                 
-                alert("Submission received! It will be reviewed by an administrator.");
+                showNotification("Submission received! Pending review.", "success");
                 closeModal();
 
             } catch (error) {
                 console.error("Submission error:", error);
-                alert("Error: " + error.message);
+                showNotification("Error: " + error.message, "error");
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Submit for Review";
             }
         });
+
+        // ---------------------------------------------------------
+        // Details Modal Logic
+        // ---------------------------------------------------------
+        
+        function openDetailsModal(site) {
+            // Determine logo source
+            let logoSrc = '/images/logo.png';
+            if (site.logoType === 'url' && site.logoUrl) logoSrc = site.logoUrl;
+            if (site.logoType === 'upload' && site.logoBase64) logoSrc = site.logoBase64;
+
+            detailLogo.src = logoSrc;
+            detailTitle.innerText = site.title || 'Untitled';
+            detailCategory.innerText = site.category || 'Web';
+            detailAuthor.innerText = site.authorName || 'Anonymous';
+            detailDesc.innerText = site.longDescription || site.description || 'No description available.';
+            detailVisitBtn.href = site.url;
+
+            // Configure Upvote Button in Modal
+            const upvotes = site.upvotes || [];
+            const isUpvoted = currentUser && upvotes.includes(currentUser.uid);
+            detailVoteCount.innerText = upvotes.length;
+            
+            // Styling based on state
+            if (isUpvoted) {
+                 detailUpvoteBtn.className = "px-4 py-2 rounded-xl border border-purple-500/50 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors flex items-center gap-2";
+            } else {
+                 detailUpvoteBtn.className = "px-4 py-2 rounded-xl border border-[#333] bg-[#1a1a1a] text-gray-400 hover:bg-[#222] hover:text-white transition-colors flex items-center gap-2";
+            }
+
+            // Remove old listener to prevent duplicates (simple clone approach)
+            const newBtn = detailUpvoteBtn.cloneNode(true);
+            detailUpvoteBtn.parentNode.replaceChild(newBtn, detailUpvoteBtn);
+            
+            // Add new listener
+            newBtn.addEventListener('click', () => {
+                 // Reuse handleUpvote logic but we need to mock the event or call function directly
+                 // Easiest is to trigger the upvote on the grid item which handles logic, 
+                 // but simpler to just call logic here directly for the modal context.
+                 
+                 // Since handleUpvote expects an event with dataset.id, let's create a proxy
+                 const mockEvent = { currentTarget: { dataset: { id: site.id } } };
+                 handleUpvote(mockEvent).then(() => {
+                     // After vote, we need to refresh THIS modal's button state.
+                     // But fetchSites updates sitesData. We need to find the updated site in sitesData.
+                     const updatedSite = sitesData.find(s => s.id === site.id);
+                     if(updatedSite) openDetailsModal(updatedSite); // Re-render modal with new state
+                 });
+            });
+
+            detailsModal.classList.remove('hidden');
+        }
+
+        function closeDetailsModal() {
+            detailsModal.classList.add('hidden');
+        }
+
+        closeDetailsBtn.addEventListener('click', closeDetailsModal);
+        detailsBackdrop.addEventListener('click', closeDetailsModal);
 
 
         // ---------------------------------------------------------
@@ -558,13 +745,16 @@
                 const isUpvoted = currentUser && upvotes.includes(currentUser.uid);
                 
                 // Determine logo source
-                let logoSrc = '/images/logo.png'; // Default or placeholder
+                let logoSrc = '/images/logo.png'; 
                 if (site.logoType === 'url' && site.logoUrl) logoSrc = site.logoUrl;
                 if (site.logoType === 'upload' && site.logoBase64) logoSrc = site.logoBase64;
 
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
+                    <div class="card-overlay" data-site-id="${site.id}">
+                        <i class="fa-solid fa-eye text-white text-3xl"></i>
+                    </div>
                     <div>
                         <div class="flex items-start gap-3 mb-3">
                              <img src="${logoSrc}" class="w-10 h-10 rounded-lg object-cover bg-[#151515] border border-[#222]" alt="Icon" onerror="this.src='/images/logo.png'">
@@ -576,7 +766,7 @@
                         <p class="text-gray-400 text-sm mb-4 line-clamp-3 leading-relaxed">${site.shortDescription || site.description || 'No description provided.'}</p>
                     </div>
                     
-                    <div>
+                    <div class="card-controls">
                         <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#1a1a1a]">
                             <div class="flex items-center gap-2">
                                 <button class="upvote-btn flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${isUpvoted ? 'bg-purple-500/20 text-purple-400 border border-purple-500/50' : 'bg-[#1a1a1a] text-gray-500 hover:bg-[#222]'}" 
@@ -594,14 +784,25 @@
                 sitesGrid.appendChild(card);
             });
 
+            // Card Click Event (Overlay)
+            document.querySelectorAll('.card-overlay').forEach(overlay => {
+                overlay.addEventListener('click', (e) => {
+                    const siteId = e.currentTarget.dataset.siteId;
+                    const site = sitesData.find(s => s.id === siteId);
+                    if (site) openDetailsModal(site);
+                });
+            });
+
+            // Upvote Button
             document.querySelectorAll('.upvote-btn').forEach(btn => {
                 btn.addEventListener('click', handleUpvote);
             });
         }
 
         async function handleUpvote(e) {
+            e.stopPropagation(); // Prevent card click
             if (!currentUser) {
-                alert("Please sign in to upvote.");
+                showNotification("Please sign in to upvote.", "error");
                 return;
             }
 
@@ -627,7 +828,7 @@
                 renderSites();
             } catch (error) {
                 console.error("Error updating vote:", error);
-                alert("Failed to update vote.");
+                showNotification("Failed to update vote.", "error");
             }
         }
 

@@ -56,7 +56,7 @@
             height: 100%;
             position: relative;
             overflow: hidden;
-            cursor: pointer; /* Make the whole card clickable */
+            cursor: pointer;
         }
         
         .card:hover {
@@ -75,17 +75,16 @@
             opacity: 0;
             transition: opacity 0.2s ease;
             z-index: 10;
-            pointer-events: none; /* KEY FIX: Let clicks pass through to the card */
+            pointer-events: none;
         }
         
         .card:hover .card-overlay {
             opacity: 1;
         }
 
-        /* Ensure interactions with buttons work and stop propagation */
         .card-controls {
             position: relative;
-            z-index: 20; /* Above overlay */
+            z-index: 20;
         }
 
         .sort-select {
@@ -182,8 +181,8 @@
             
             <div class="flex items-center gap-3">
                  <!-- My Pending Button -->
-                 <button id="my-pending-btn" class="hidden px-3 py-2 text-sm text-gray-400 hover:text-white border border-[#333] rounded-lg transition-colors">
-                    <i class="fa-solid fa-clock mr-1"></i> My Pending
+                 <button id="my-pending-btn" class="hidden btn-primary bg-opacity-10 border-opacity-50 text-gray-300">
+                    <i class="fa-solid fa-clock mr-1"></i> My Pending <span id="pending-count" class="hidden ml-1 opacity-70">(0)</span>
                 </button>
 
                 <div class="relative">
@@ -227,13 +226,15 @@
             <div class="bg-[#0d0d0d] border border-[#1a1a1a] rounded-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
                 
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl text-white font-light">Submit a Site</h2>
+                    <h2 class="text-2xl text-white font-light" id="modal-title">Submit a Site</h2>
                     <button id="close-modal-btn" class="text-gray-500 hover:text-white">
                         <i class="fa-solid fa-xmark text-xl"></i>
                     </button>
                 </div>
 
                 <form id="submission-form" class="space-y-4">
+                    <input type="hidden" id="edit-site-id" value="">
+                    
                     <!-- Title -->
                     <div>
                         <label class="block text-xs text-gray-500 uppercase mb-1">Project Title <span class="text-red-500">*</span></label>
@@ -247,26 +248,23 @@
                     </div>
 
                     <!-- Creator Info -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                             <label class="block text-xs text-gray-500 uppercase mb-1">Creator Name <span class="text-red-500">*</span></label>
-                             <input type="text" id="site-author-name" required class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
-                        </div>
-                        <div>
-                             <label class="block text-xs text-gray-500 uppercase mb-1">Contact Link (Optional)</label>
-                             <input type="url" id="site-contact-link" placeholder="https://..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
-                        </div>
+                    <div>
+                         <label class="block text-xs text-gray-500 uppercase mb-1">Creator Name <span class="text-red-500">*</span></label>
+                         <input type="text" id="site-author-name" required class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                             <label class="block text-xs text-gray-500 uppercase mb-1">Discord Invite (Optional)</label>
-                             <input type="url" id="site-discord-link" placeholder="https://discord.gg/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
-                        </div>
-                        <div>
-                             <label class="block text-xs text-gray-500 uppercase mb-1">GitHub Repo (Optional)</label>
-                             <input type="url" id="site-github-link" placeholder="https://github.com/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
-                        </div>
+
+                    <!-- Stacked Links -->
+                    <div>
+                         <label class="block text-xs text-gray-500 uppercase mb-1">Contact Link (Optional)</label>
+                         <input type="url" id="site-contact-link" placeholder="https://..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                    </div>
+                    <div>
+                         <label class="block text-xs text-gray-500 uppercase mb-1">Discord Invite (Optional)</label>
+                         <input type="url" id="site-discord-link" placeholder="https://discord.gg/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
+                    </div>
+                    <div>
+                         <label class="block text-xs text-gray-500 uppercase mb-1">GitHub Repo (Optional)</label>
+                         <input type="url" id="site-github-link" placeholder="https://github.com/..." class="w-full bg-[#151515] border border-[#333] rounded-lg px-4 py-2 text-white focus:border-purple-500 outline-none transition-colors">
                     </div>
 
                     <!-- Descriptions -->
@@ -352,17 +350,29 @@
 
                 <div class="flex flex-col sm:flex-row gap-6 mb-8">
                     <img id="detail-logo" src="" alt="Logo" class="w-24 h-24 rounded-2xl bg-[#151515] border border-[#222] object-cover flex-shrink-0">
-                    <div>
-                        <h2 id="detail-title" class="text-3xl text-white font-medium mb-2 leading-tight"></h2>
-                        <div class="flex items-center gap-3 mb-4 text-sm text-gray-500">
-                            <span id="detail-category" class="border border-gray-800 px-2 py-0.5 rounded-full"></span>
-                            <span>By <span id="detail-author" class="text-gray-400"></span></span>
+                    <div class="w-full">
+                        <div class="flex justify-between items-start w-full">
+                            <div>
+                                <h2 id="detail-title" class="text-3xl text-white font-medium mb-2 leading-tight"></h2>
+                                <div class="flex items-center gap-3 mb-4 text-sm text-gray-500">
+                                    <span id="detail-category" class="border border-gray-800 px-2 py-0.5 rounded-full"></span>
+                                    <span>By <span id="detail-author" class="text-gray-400"></span></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Edit/Delete Controls (Hidden by default) -->
+                            <div id="owner-controls" class="hidden flex gap-2">
+                                <button id="edit-site-btn" class="p-2 text-gray-400 hover:text-white border border-[#333] hover:border-gray-500 rounded-lg transition-colors" title="Edit Site">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button id="delete-site-btn" class="p-2 text-red-400 hover:text-red-300 border border-red-900/30 hover:border-red-900/60 bg-red-900/10 rounded-lg transition-colors" title="Delete Site">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
                         </div>
                         
                         <!-- Social Links Container -->
-                        <div id="detail-socials" class="flex gap-3 mb-4 text-gray-400 text-sm">
-                            <!-- Links injected via JS -->
-                        </div>
+                        <div id="detail-socials" class="flex gap-3 mb-4 text-gray-400 text-sm"></div>
 
                         <div class="flex gap-3">
                             <a id="detail-visit-btn" href="#" target="_blank" class="btn-primary flex items-center gap-2 px-6">
@@ -375,9 +385,15 @@
                     </div>
                 </div>
 
-                <div class="border-t border-[#1a1a1a] pt-6">
-                    <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-3">About this project</h3>
-                    <p id="detail-description" class="text-gray-300 leading-relaxed whitespace-pre-line"></p>
+                <div class="border-t border-[#1a1a1a] pt-6 space-y-4">
+                    <div>
+                        <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-2">Short Description</h3>
+                        <p id="detail-short-desc" class="text-gray-300 text-sm leading-relaxed"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm text-gray-500 uppercase tracking-wider mb-2">Full Description</h3>
+                        <p id="detail-description" class="text-gray-300 leading-relaxed whitespace-pre-line"></p>
+                    </div>
                 </div>
 
             </div>
@@ -405,7 +421,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, arrayUnion, arrayRemove, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, deleteDoc, arrayUnion, arrayRemove, serverTimestamp, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // Initialize Firebase
         const app = initializeApp(window.firebaseConfig);
@@ -420,6 +436,7 @@
         let currentUser = null;
         let sitesData = [];
         let finalLogoBase64 = null;
+        let pendingUnsubscribe = null;
 
         // DOM Elements
         const loginBtn = document.getElementById('login-btn');
@@ -433,13 +450,16 @@
         const applyBtn = document.getElementById('apply-btn');
         const adminBtn = document.getElementById('admin-btn');
         const myPendingBtn = document.getElementById('my-pending-btn');
+        const pendingCount = document.getElementById('pending-count');
         const notificationContainer = document.getElementById('notification-container');
         
         // Modal Elements (Submission)
         const modal = document.getElementById('submission-modal');
+        const modalTitle = document.getElementById('modal-title');
         const closeModalBtn = document.getElementById('close-modal-btn');
         const modalBackdrop = document.getElementById('modal-backdrop');
         const submissionForm = document.getElementById('submission-form');
+        const editSiteIdInput = document.getElementById('edit-site-id');
         const logoTypeRadios = document.getElementsByName('logo-type');
         const logoUploadContainer = document.getElementById('logo-upload-container');
         const logoUrlContainer = document.getElementById('logo-url-container');
@@ -458,11 +478,15 @@
         const detailTitle = document.getElementById('detail-title');
         const detailCategory = document.getElementById('detail-category');
         const detailAuthor = document.getElementById('detail-author');
+        const detailShortDesc = document.getElementById('detail-short-desc');
         const detailDesc = document.getElementById('detail-description');
         const detailVisitBtn = document.getElementById('detail-visit-btn');
-        let detailUpvoteBtn = document.getElementById('detail-upvote-btn');
+        let detailUpvoteBtn = document.getElementById('detail-upvote-btn'); // Using let for replacement
         const detailVoteCount = document.getElementById('detail-vote-count');
         const detailSocials = document.getElementById('detail-socials');
+        const ownerControls = document.getElementById('owner-controls');
+        let editSiteBtn = document.getElementById('edit-site-btn');
+        let deleteSiteBtn = document.getElementById('delete-site-btn');
         
         // Pending Modal
         const pendingModal = document.getElementById('pending-modal');
@@ -486,17 +510,35 @@
                     adminBtn.classList.add('hidden');
                 }
                 
-                // Show "My Pending" button
-                myPendingBtn.classList.remove('hidden');
+                // Pending Listener
+                setupPendingListener(user.uid);
 
             } else {
                 loginBtn.classList.remove('hidden');
                 userProfile.classList.add('hidden');
                 adminBtn.classList.add('hidden');
                 myPendingBtn.classList.add('hidden');
+                if(pendingUnsubscribe) pendingUnsubscribe();
             }
             renderSites();
         });
+
+        // Setup Realtime Pending Count
+        function setupPendingListener(uid) {
+            if(pendingUnsubscribe) pendingUnsubscribe();
+            
+            const q = query(collection(db, "submissions"), where("authorUid", "==", uid));
+            pendingUnsubscribe = onSnapshot(q, (snapshot) => {
+                const count = snapshot.size;
+                if (count > 0) {
+                    myPendingBtn.classList.remove('hidden');
+                    pendingCount.textContent = `(${count})`;
+                    pendingCount.classList.remove('hidden');
+                } else {
+                    myPendingBtn.classList.add('hidden');
+                }
+            });
+        }
 
         // Auth Actions
         loginBtn.addEventListener('click', () => {
@@ -534,17 +576,51 @@
         }
 
         // ---------------------------------------------------------
-        // Modal Logic (Submission)
+        // Modal Logic (Submission / Edit)
         // ---------------------------------------------------------
         
-        function openModal() {
+        function openSubmissionModal(editData = null) {
             if (!currentUser) {
                 showNotification("Please sign in to submit a site.", "error");
                 return;
             }
-            // Auto-fill author name if empty
-            const authorInput = document.getElementById('site-author-name');
-            if(!authorInput.value) authorInput.value = currentUser.displayName;
+            
+            // Reset Form
+            submissionForm.reset();
+            resetLogoPreview();
+            
+            if (editData) {
+                modalTitle.innerText = "Edit Site";
+                editSiteIdInput.value = editData.id;
+                document.getElementById('site-title').value = editData.title;
+                document.getElementById('site-url').value = editData.url;
+                document.getElementById('site-author-name').value = editData.authorName;
+                document.getElementById('site-contact-link').value = editData.contactLink || '';
+                document.getElementById('site-discord-link').value = editData.discordLink || '';
+                document.getElementById('site-github-link').value = editData.githubLink || '';
+                document.getElementById('site-short-desc').value = editData.shortDescription;
+                document.getElementById('site-long-desc').value = editData.longDescription;
+                
+                // Handle Logo Pre-fill
+                if (editData.logoType === 'url') {
+                    document.getElementById('logo-type-url').checked = true;
+                    logoUrlContainer.classList.remove('hidden');
+                    logoUploadContainer.classList.add('hidden');
+                    document.getElementById('logo-url').value = editData.logoUrl;
+                    updatePreview(editData.logoUrl);
+                } else if (editData.logoType === 'upload' && editData.logoBase64) {
+                    document.getElementById('logo-type-upload').checked = true;
+                    logoUploadContainer.classList.remove('hidden');
+                    logoUrlContainer.classList.add('hidden');
+                    finalLogoBase64 = editData.logoBase64;
+                    updatePreview(editData.logoBase64);
+                }
+            } else {
+                modalTitle.innerText = "Submit a Site";
+                editSiteIdInput.value = "";
+                const authorInput = document.getElementById('site-author-name');
+                if(!authorInput.value) authorInput.value = currentUser.displayName;
+            }
             
             modal.classList.remove('hidden');
         }
@@ -555,7 +631,7 @@
             resetLogoPreview();
         }
 
-        applyBtn.addEventListener('click', openModal);
+        applyBtn.addEventListener('click', () => openSubmissionModal(null));
         closeModalBtn.addEventListener('click', closeModal);
         modalBackdrop.addEventListener('click', closeModal);
 
@@ -566,6 +642,7 @@
                     logoUploadContainer.classList.remove('hidden');
                     logoUrlContainer.classList.add('hidden');
                     if (logoFile.files[0]) handleFileUpload(logoFile.files[0]);
+                    else if (finalLogoBase64) updatePreview(finalLogoBase64); // Restore base64 preview if switching back
                 } else {
                     logoUploadContainer.classList.add('hidden');
                     logoUrlContainer.classList.remove('hidden');
@@ -632,7 +709,7 @@
             logoPreview.src = '';
             logoPreview.classList.add('hidden');
             logoPlaceholder.classList.remove('hidden');
-            finalLogoBase64 = null;
+            if (!editSiteIdInput.value) finalLogoBase64 = null; // Only clear base64 if not editing or explicit clear needed
         }
 
         // Form Submission
@@ -652,6 +729,7 @@
                 const githubLink = document.getElementById('site-github-link').value;
                 const shortDesc = document.getElementById('site-short-desc').value;
                 const longDesc = document.getElementById('site-long-desc').value;
+                const editId = editSiteIdInput.value;
                 
                 const logoType = document.querySelector('input[name="logo-type"]:checked').value;
                 let logoPayload = {};
@@ -682,10 +760,17 @@
                     submittedAt: serverTimestamp()
                 };
 
+                if (editId) {
+                    // Edit Request
+                    docData.isEdit = true;
+                    docData.originalSiteId = editId;
+                }
+
                 await addDoc(collection(db, "submissions"), docData);
                 
-                showNotification("Submission received! Pending review.", "success");
+                showNotification("Request received! Pending review.", "success");
                 closeModal();
+                if (detailsModal) detailsModal.classList.add('hidden');
 
             } catch (error) {
                 console.error("Submission error:", error);
@@ -723,11 +808,14 @@
                      if (data.logoType === 'url' && data.logoUrl) logoSrc = data.logoUrl;
                      if (data.logoType === 'upload' && data.logoBase64) logoSrc = data.logoBase64;
                      
+                     let statusText = "Awaiting Review";
+                     if (data.isEdit) statusText = "Update Request Pending";
+
                      item.innerHTML = `
                          <img src="${logoSrc}" class="w-12 h-12 rounded-lg object-cover bg-black" onerror="this.src='/images/logo.png'">
                          <div>
                              <h3 class="text-white font-medium">${data.title}</h3>
-                             <p class="text-xs text-yellow-500"><i class="fa-solid fa-hourglass-half mr-1"></i> Awaiting Review</p>
+                             <p class="text-xs text-yellow-500"><i class="fa-solid fa-hourglass-half mr-1"></i> ${statusText}</p>
                          </div>
                      `;
                      pendingList.appendChild(item);
@@ -762,6 +850,7 @@
             detailTitle.innerText = site.title || 'Untitled';
             detailCategory.innerText = site.category || 'Web';
             detailAuthor.innerText = site.authorName || 'Anonymous';
+            detailShortDesc.innerText = site.shortDescription || '';
             detailDesc.innerText = site.longDescription || site.description || 'No description available.';
             detailVisitBtn.href = site.url;
             
@@ -777,12 +866,11 @@
                  detailSocials.innerHTML += `<a href="${site.githubLink}" target="_blank" class="hover:text-white transition-colors" title="GitHub"><i class="fa-brands fa-github"></i></a>`;
             }
 
-            // Configure Upvote Button in Modal
+            // Configure Upvote Button
             const upvotes = site.upvotes || [];
             const isUpvoted = currentUser && upvotes.includes(currentUser.uid);
             detailVoteCount.innerText = upvotes.length;
             
-            // Styling based on state
             if (isUpvoted) {
                  detailUpvoteBtn.className = "px-4 py-2 rounded-xl border border-purple-500/50 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors flex items-center gap-2";
             } else {
@@ -803,6 +891,41 @@
                  });
             });
 
+            // Owner Controls (Edit/Delete)
+            if (currentUser && (currentUser.uid === site.authorUid || currentUser.email === ADMIN_EMAIL)) {
+                ownerControls.classList.remove('hidden');
+                
+                // Refresh Edit Btn
+                const newEdit = editSiteBtn.cloneNode(true);
+                editSiteBtn.parentNode.replaceChild(newEdit, editSiteBtn);
+                editSiteBtn = newEdit;
+                
+                editSiteBtn.addEventListener('click', () => {
+                    openSubmissionModal(site);
+                });
+
+                // Refresh Delete Btn
+                const newDelete = deleteSiteBtn.cloneNode(true);
+                deleteSiteBtn.parentNode.replaceChild(newDelete, deleteSiteBtn);
+                deleteSiteBtn = newDelete;
+                
+                deleteSiteBtn.addEventListener('click', async () => {
+                    if (confirm("Are you sure you want to delete this site? This cannot be undone.")) {
+                        try {
+                            await deleteDoc(doc(db, "sites", site.id));
+                            closeDetailsModal();
+                            showNotification("Site deleted.", "success");
+                        } catch (e) {
+                            console.error(e);
+                            showNotification("Error deleting site.", "error");
+                        }
+                    }
+                });
+
+            } else {
+                ownerControls.classList.add('hidden');
+            }
+
             detailsModal.classList.remove('hidden');
         }
 
@@ -818,14 +941,13 @@
         // Data Fetching & Rendering
         // ---------------------------------------------------------
         async function fetchSites() {
-            try {
-                const querySnapshot = await getDocs(collection(db, "sites"));
+            // Using onSnapshot for realtime site updates (better UX for edits/deletes)
+            onSnapshot(collection(db, "sites"), (snapshot) => {
+                loadingIndicator.classList.add('hidden');
                 sitesData = [];
-                querySnapshot.forEach((doc) => {
+                snapshot.forEach((doc) => {
                     sitesData.push({ id: doc.id, ...doc.data() });
                 });
-                
-                loadingIndicator.classList.add('hidden');
                 
                 if (sitesData.length === 0) {
                     emptyState.classList.remove('hidden');
@@ -833,11 +955,7 @@
                     emptyState.classList.add('hidden');
                     sortAndRender();
                 }
-            } catch (error) {
-                console.error("Error fetching sites:", error);
-                loadingIndicator.classList.add('hidden');
-                sitesGrid.innerHTML = `<p class="text-red-500 text-center col-span-full">Unable to load sites. (Are Firestore rules configured?)</p>`;
-            }
+            });
         }
 
         function sortAndRender() {
@@ -881,7 +999,6 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 // Attach click directly to card for robust interaction
-                // Overlay is now pointer-events-none (pure visual)
                 card.onclick = (e) => {
                      // Check if clicked element is a button or link (or child of one)
                      if (e.target.closest('button') || e.target.closest('a')) return;
@@ -937,23 +1054,20 @@
             const btn = e.currentTarget;
             const siteId = btn.dataset.id;
             const siteRef = doc(db, "sites", siteId);
-            const siteIndex = sitesData.findIndex(s => s.id === siteId);
             
-            if (siteIndex === -1) return;
+            const site = sitesData.find(s => s.id === siteId);
+            if (!site) return;
 
-            const site = sitesData[siteIndex];
             const upvotes = site.upvotes || [];
             const isUpvoted = upvotes.includes(currentUser.uid);
 
             try {
                 if (isUpvoted) {
-                    site.upvotes = upvotes.filter(uid => uid !== currentUser.uid);
                     await updateDoc(siteRef, { upvotes: arrayRemove(currentUser.uid) });
                 } else {
-                    site.upvotes.push(currentUser.uid);
                     await updateDoc(siteRef, { upvotes: arrayUnion(currentUser.uid) });
                 }
-                renderSites();
+                // No need to manually re-render, onSnapshot will handle it
             } catch (error) {
                 console.error("Error updating vote:", error);
                 showNotification("Failed to update vote.", "error");

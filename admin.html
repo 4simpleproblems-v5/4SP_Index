@@ -39,6 +39,10 @@
             padding: 1.5rem;
             margin-bottom: 1rem;
         }
+        
+        .diff-added { background-color: rgba(34, 197, 94, 0.2); color: #4ade80; padding: 2px 4px; border-radius: 4px; }
+        .diff-removed { background-color: rgba(239, 68, 68, 0.2); color: #f87171; text-decoration: line-through; padding: 2px 4px; border-radius: 4px; margin-right: 4px; }
+        .diff-block { margin-bottom: 8px; border-left: 2px solid #333; padding-left: 8px; }
     </style>
 </head>
 <body class="bg-black text-white">
@@ -66,7 +70,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const app = initializeApp(window.firebaseConfig);
         const auth = getAuth(app);
@@ -96,6 +100,21 @@
             signInWithPopup(auth, provider).catch(console.error);
         });
 
+        function renderDiff(label, oldVal, newVal) {
+            if (oldVal === newVal) {
+                return `<p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">${label}:</span> ${newVal || ''}</p>`;
+            }
+            return `
+                <div class="diff-block">
+                    <span class="text-gray-500 text-xs uppercase block mb-1">${label} Changed:</span>
+                    <div class="text-sm">
+                        <span class="diff-removed">${oldVal || '(empty)'}</span>
+                        <span class="diff-added">${newVal || '(empty)'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
         async function loadSubmissions() {
             submissionsList.innerHTML = '<p class="text-gray-500">Loading...</p>';
             try {
@@ -107,7 +126,8 @@
                     return;
                 }
 
-                querySnapshot.forEach((docSnap) => {
+                // Iterate using for...of to allow await inside loop
+                for (const docSnap of querySnapshot.docs) {
                     const data = docSnap.data();
                     const card = document.createElement('div');
                     card.className = 'card';
@@ -119,6 +139,46 @@
                         logoHtml = `<img src="${data.logoBase64}" class="w-16 h-16 rounded-lg object-cover bg-gray-800" alt="Logo">`;
                     }
 
+                    // Handle EDIT Requests
+                    let contentHtml = '';
+                    let isEdit = !!data.isEdit && !!data.originalSiteId;
+                    let originalData = {};
+
+                    if (isEdit) {
+                        const originalDoc = await getDoc(doc(db, "sites", data.originalSiteId));
+                        if (originalDoc.exists()) {
+                            originalData = originalDoc.data();
+                            
+                            contentHtml += `<div class="mb-4 bg-yellow-500/10 border border-yellow-500/30 p-2 rounded text-yellow-200 text-xs uppercase font-bold text-center">Update Request</div>`;
+                            
+                            // Diff Fields
+                            contentHtml += renderDiff('Title', originalData.title, data.title);
+                            contentHtml += renderDiff('URL', originalData.url, data.url);
+                            contentHtml += renderDiff('Short Desc', originalData.shortDescription, data.shortDescription);
+                            contentHtml += renderDiff('Long Desc', originalData.longDescription, data.longDescription);
+                            // Socials
+                            contentHtml += renderDiff('Author', originalData.authorName, data.authorName);
+                            contentHtml += renderDiff('Contact', originalData.contactLink, data.contactLink);
+                            contentHtml += renderDiff('Discord', originalData.discordLink, data.discordLink);
+                            contentHtml += renderDiff('GitHub', originalData.githubLink, data.githubLink);
+
+                        } else {
+                            contentHtml += `<p class="text-red-500">Original site not found (ID: ${data.originalSiteId})</p>`;
+                            isEdit = false; // Fallback to normal
+                        }
+                    } 
+                    
+                    if (!isEdit) {
+                        // Standard View
+                        contentHtml += `
+                            <div class="mb-4 space-y-2">
+                                <p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">Short:</span> ${data.shortDescription}</p>
+                                <p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">Long:</span> ${data.longDescription}</p>
+                                ${data.contactLink ? `<p class="text-gray-400 text-xs">Contact: ${data.contactLink}</p>` : ''}
+                            </div>
+                        `;
+                    }
+
                     card.innerHTML = `
                         <div class="flex gap-4 mb-4">
                             ${logoHtml}
@@ -128,35 +188,47 @@
                                 <p class="text-xs text-gray-600">Submitted by: ${data.authorName} (${data.authorEmail})</p>
                             </div>
                         </div>
-                        <div class="mb-4 space-y-2">
-                            <p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">Short:</span> ${data.shortDescription}</p>
-                            <p class="text-gray-300"><span class="text-gray-500 text-xs uppercase">Long:</span> ${data.longDescription}</p>
-                        </div>
+                        ${contentHtml}
                         <div class="flex gap-3 pt-4 border-t border-[#1a1a1a]">
-                            <button class="btn-approve bg-green-500/20 text-green-400 border border-green-500/50 px-4 py-2 rounded-lg hover:bg-green-500/30">Approve</button>
+                            <button class="btn-approve bg-green-500/20 text-green-400 border border-green-500/50 px-4 py-2 rounded-lg hover:bg-green-500/30">
+                                ${isEdit ? 'Approve Update' : 'Approve'}
+                            </button>
                             <button class="btn-deny bg-red-500/20 text-red-400 border border-red-500/50 px-4 py-2 rounded-lg hover:bg-red-500/30">Deny</button>
                         </div>
                     `;
 
                     // Logic for Approve
                     card.querySelector('.btn-approve').addEventListener('click', async () => {
-                        if(!confirm("Approve this site?")) return;
+                        if(!confirm("Approve this?")) return;
                         try {
-                            // Move to sites collection
-                            const siteData = {
-                                ...data,
-                                createdAt: serverTimestamp(),
-                                upvotes: [] // Initialize empty upvotes
-                            };
-                            // Remove submission-specific fields if any (keep author info)
+                            if (isEdit) {
+                                // Update existing site
+                                const updatePayload = { ...data };
+                                delete updatePayload.isEdit;
+                                delete updatePayload.originalSiteId;
+                                delete updatePayload.submittedAt;
+                                delete updatePayload.authorUid; // Keep original author UID usually, or update if transfer? Assuming same.
+                                
+                                // Preserve Upvotes and CreatedAt
+                                updatePayload.updatedAt = serverTimestamp();
+                                
+                                await updateDoc(doc(db, "sites", data.originalSiteId), updatePayload);
+                            } else {
+                                // New Site
+                                const siteData = {
+                                    ...data,
+                                    createdAt: serverTimestamp(),
+                                    upvotes: [] 
+                                };
+                                await setDoc(doc(db, "sites", docSnap.id), siteData);
+                            }
                             
-                            await setDoc(doc(db, "sites", docSnap.id), siteData);
                             await deleteDoc(doc(db, "submissions", docSnap.id));
                             card.remove();
-                            alert("Site approved!");
+                            alert("Approved!");
                         } catch (e) {
                             console.error(e);
-                            alert("Error approving site: " + e.message);
+                            alert("Error: " + e.message);
                         }
                     });
 
@@ -168,12 +240,12 @@
                             card.remove();
                         } catch (e) {
                             console.error(e);
-                            alert("Error denying site: " + e.message);
+                            alert("Error: " + e.message);
                         }
                     });
 
                     submissionsList.appendChild(card);
-                });
+                }
             } catch (error) {
                 console.error("Error loading submissions:", error);
                 submissionsList.innerHTML = `<p class="text-red-500">Error loading submissions: ${error.message}</p>`;
